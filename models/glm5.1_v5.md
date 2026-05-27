@@ -277,6 +277,33 @@ runs used MTP enabled and the same v5 image/config family. `A4` means
 | 4 | A4 | `0.845` | 69.6 | 383.8 | `/root/bench-results/glm51-v5-upstreammain-20260526/dcp4-mtp1-a16off-quick-gpu0845/quick-cc1-cc16-ctx0-20260526-1938.json` |
 | 4 | A16 | `0.845` | 65.0 | 389.5 | `/root/bench-results/glm51-v5-upstreammain-20260526/dcp4-mtp1-a16-noextendoverride/quick-cc1-cc16-ctx0.json` |
 
+MTP-off DCP4 A4 regression check, 2026-05-27:
+
+The apparent DCP4 MTP-off gap against v2 was mostly an apples-to-oranges
+comparison. The stored v2 `glm-dcp4-mtp0` artefact was not pure A4; its
+`docker-run.env` contains `B12X_MOE_FORCE_A16=1`. Re-running the v2 image with
+A16 explicitly disabled gives the correct A4 reference.
+
+| Stack | Mode | cc1 tok/s | cc16 tok/s | File |
+|---|---|---:|---:|---|
+| v2 stored artefact | MTP off, legacy A16 env | 52.15 | 336.54 | `/root/bench-results/glm51-v2-full-68b3569f-20260514/glm-dcp4-mtp0/decode-matrix.json` |
+| v2 re-run | MTP off, A4 | 51.0 | 322.7 | `/root/bench-results/glm51-v5-mtp0-a4-regression-20260527/v2-reference-dcp4-mtp0-a4-cppar56-gpu0865/quick-cc1-cc16-ctx0-duration30.json` |
+| v5 baseline | MTP off, A4 | 48.0 | 309.4 | `/root/bench-results/glm51-v5-mtp0-a4-regression-20260527/main-dcp4-mtp0-a4-cppar56-noautotune-gpu0865/quick-cc1-cc16-ctx0.json` |
+| v5 + B12X fused final-LSE | MTP off, A4 | 50.8 | 320.1 | `/root/bench-results/glm51-v5-mtp0-a4-regression-20260527/main-dcp4-mtp0-a4-fusedlse-cppar56-noautotune-gpu0865/quick-cc1-cc16-ctx0-duration30-numchunkptr.json` |
+| v5 + B12X fused final-LSE | MTP off, A16 | 43.8 | 346.0 | `/root/bench-results/glm51-v5-mtp0-a4-regression-20260527/main-dcp4-mtp0-a16-fusedlse-cppar56-noautotune-gpu0865/quick-cc1-cc16-ctx0-duration30.json` |
+
+The real v5 DCP4 A4 loss was the B12X sparse MLA final-LSE path. v2 used a
+small vLLM Triton final-LSE kernel; v5 delegated `return_lse=True` into B12X,
+where final LSE was computed by a generic PyTorch `logsumexp` over split chunks
+for every decode layer. B12X commit
+[`9cf67f7`](https://github.com/voipmonitor/b12x/commit/9cf67f7) adds a fused
+Triton final-LSE reduction using the existing B12X split-workspace tensors and
+recovers v5 DCP4 MTP-off A4 to the v2 A4 level. AR backend and FlashInfer
+autotune were checked separately and were not the root cause.
+
+The experimental variant that moved final-LSE before split-MLA merge was
+rejected: it measured `50.8` / `316.1` tok/s and was not committed.
+
 Prefill scout speed:
 
 | DCP | 8k tok/s | 16k tok/s | 32k tok/s | 64k tok/s | 128k tok/s |
