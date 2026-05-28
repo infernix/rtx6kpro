@@ -10,6 +10,7 @@ Each highlight links directly to the relevant Discord message.
 
 | Date | Highlights |
 |------|------------|
+| [2026-05-28](2026-05/2026-05-28.md) | DSV4-Flash SM120 breakthrough: `lucifer1004/dsv4-flash-sm120:latest` achieves full DeepGEMM prefill/ |
 | [2026-05-27](2026-05/2026-05-27.md) | Luke fixed a long-context bug in both sglang and vllm; took the jasl branch, stripped its kernels, s |
 | [2026-05-26](2026-05/2026-05-26.md) | DSv4-Flash docker `jasl-dsv4-5-23-13.2` (cu132): gen throughput ~35→55 tok/s; Lavd expects 70+ onc |
 | [2026-05-25](2026-05/2026-05-25.md) | b12x DS V4 Flash sglang push: luke released new b12x build with MTP support; early results show **~4 |
@@ -98,6 +99,7 @@ Each highlight links directly to the relevant Discord message.
 
 | Date | Highlights |
 |------|------------|
+| [2026-05-28](2026-05/2026-05-28.md) | DSV4-Flash SM120 breakthrough: `lucifer1004/dsv4-flash-sm120:latest` achieves full DeepGEMM prefill/ |
 | [2026-05-27](2026-05/2026-05-27.md) | Luke fixed a long-context bug in both sglang and vllm; took the jasl branch, stripped its kernels, s |
 | [2026-05-26](2026-05/2026-05-26.md) | DSv4-Flash docker `jasl-dsv4-5-23-13.2` (cu132): gen throughput ~35→55 tok/s; Lavd expects 70+ onc |
 | [2026-05-25](2026-05/2026-05-25.md) | b12x DS V4 Flash sglang push: luke released new b12x build with MTP support; early results show **~4 |
