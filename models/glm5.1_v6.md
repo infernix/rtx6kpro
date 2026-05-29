@@ -4,7 +4,8 @@ Measured starting on 2026-05-28 on the local 8-GPU RTX PRO 6000 Blackwell
 host.
 
 This page tracks the GLM-5.1 v6 quantization sweep. The first recorded speed
-row is pure AWQ with DCP4 and MTP enabled. More quant variants will be added as
+row is pure AWQ with DCP4 and MTP enabled. The first LAVD quality row is from
+the AWQ+MXFP8 L42-62 DCP4 MTP instance. More quant variants will be added as
 they are measured.
 
 Current live benchmark JSON:
@@ -44,6 +45,70 @@ glm51-v5-awq-mxfp8-hybrid-mtpfix:test
 Runtime scripts should deliberately unset `NCCL_GRAPH_FILE` and
 `VLLM_B12X_MLA_EXTEND_MAX_CHUNKS`. Do not set either to an empty or forced value
 for DCP runs.
+
+## v6 Source Branches
+
+The v6 rebuild is based on branches that match the live AWQ+MXFP8 image source
+state, plus a fresh FlashInfer checkout:
+
+```text
+vllm:       https://github.com/voipmonitor/vllm/tree/codex/glm51-v6-awq-mxfp8-20260528
+b12x:       https://github.com/voipmonitor/b12x/tree/codex/glm51-v6-awq-mxfp8-20260528
+flashinfer: https://github.com/flashinfer-ai/flashinfer/tree/b7181ce827541a31d773dc4a71b6e5e7a309ca02
+```
+
+The live image used for the first AWQ+MXFP8 checks was:
+
+```text
+image:      glm51-v5-awq-mxfp8-hybrid-mtpfix:test
+image id:   sha256:fa9ff7aee78f60cc2df44a010845b9b46c0fdfc224311c3707ef8a30ec2bc9e0
+container:  glm51-awq-mxfp8-dcp4-mtp-greedy
+```
+
+Source verification against that container:
+
+```text
+vllm/config/speculative.py                         MATCH
+vllm/model_executor/layers/quantization/modelopt.py MATCH
+vllm/model_executor/model_loader/weight_utils.py    MATCH
+vllm/model_executor/models/deepseek_v2.py           MATCH
+b12x/distributed/pcie_oneshot.cu                    MATCH
+b12x/moe/fused/w4a16/kernel.py                      MATCH
+b12x/integration/tp_moe.py                          MATCH
+b12x/moe/fused/w4a16/prepare.py                     MATCH
+```
+
+The v6 Docker rebuild should use those branches directly instead of ad-hoc
+overlay `COPY` layers:
+
+```bash
+git clone https://github.com/voipmonitor/vllm.git vllm-glm51-v6
+cd vllm-glm51-v6
+git checkout codex/glm51-v6-awq-mxfp8-20260528
+
+docker build \
+  -f docker/Dockerfile.glm51-kimi-b12x013 \
+  --build-arg B12X_REPO=https://github.com/voipmonitor/b12x.git \
+  --build-arg B12X_COMMIT=debdd90789d4ac59e5ba0adb1c4380f994fbe89c \
+  --build-arg FLASHINFER_REPO=https://github.com/flashinfer-ai/flashinfer.git \
+  --build-arg FLASHINFER_COMMIT=b7181ce827541a31d773dc4a71b6e5e7a309ca02 \
+  --build-arg VLLM_BUILD_VERSION=0.11.2.dev278+glm51v6awqmxfp820260528 \
+  -t voipmonitor/vllm:glm51-v6-awqmxfp8-vllmd8de8e1-b12xdebdd90-flashinferb7181ce-20260528 \
+  .
+```
+
+If rebuilding from a local checkout instead of the published branch, verify the
+same source hashes before tagging the image.
+
+The v6 Dockerfile also performs a targeted cublas package refresh before
+building FlashInfer:
+
+```bash
+apt-get install -y --allow-change-held-packages \
+  --no-install-recommends --only-upgrade \
+  libcublas-13-0 \
+  libcublas-dev-13-0
+```
 
 ## MTP AWQ Loader Fix
 
@@ -215,6 +280,129 @@ in `/root/benchmark_results.json` under `request_samples`.
 
 Burst/E2E decode was not run for this entry.
 
+## NVFP4/MXFP8 A16 DCP/MTP Speed Sweep
+
+Measured on 2026-05-29 against the v7 CUDA 13.2 image with the B12X PR8
+small-M direct W4A16 overlay. This sweep is included on the v6 page because it
+is the first structured GLM-5.1 v6-style DCP/MTP matrix for the mixed
+NVFP4/MXFP8 checkpoint.
+
+```text
+image:      voipmonitor/vllm:glm51-v7-awq-mxfp8-b12x-pr8-smallm-cu132-20260528
+checkpoint: /root/kld/checkpoints/GLM-5.1-NVFP4-MXFP8-L42-62-BF16src-20260526
+served:     GLM-5
+port:       5317
+TP:         8
+DCP:        1,2,4,8
+attention:  B12X_MLA_SPARSE
+MoE:        b12x
+KV cache:   fp8
+A16:        on (`VLLM_B12X_FORCE_MOE_A16=1`, `B12X_MOE_FORCE_A16=0`)
+small-M:    on (`B12X_W4A16_SMALL_M_DIRECT=1`)
+MTP on:     `lukealonso/GLM-5.1-NVFP4-MTP`, method `mtp`, 3 speculative tokens,
+            `draft_sample_method=probabilistic`
+MTP off:    `GLM51_DISABLE_MTP=1`
+```
+
+Image labels:
+
+```text
+vllm:       https://github.com/voipmonitor/vllm/tree/codex/glm51-v6-awq-mxfp8-clean-rebase-20260528
+vllm sha:   2f5db31f9bcddf8d0cdd4d52f012759f50f37875
+b12x:       https://github.com/voipmonitor/b12x/tree/codex/glm51-v6-awq-mxfp8-pr8-smallm-20260528
+b12x sha:   fbb76ca3a91491c8f26a2edf729540414323e55b
+flashinfer: 8eb61546e82169759801c7895537f3c09ec423f9
+cuda:       13.2.1
+cublas:     13.4.1.2-1
+cudnn:      9.22.0.52-1
+nccl:       local-inference-lab/nccl-canonical canonical/cu132-nccl2304-amd-noxml
+```
+
+Benchmark command template:
+
+```bash
+python3 /root/llm-inference-bench/llm_decode_bench.py \
+  --host 127.0.0.1 \
+  --port 5317 \
+  --model GLM-5 \
+  --concurrency 1,16 \
+  --contexts 0 \
+  --duration 30 \
+  --skip-prefill \
+  --dcp-size <DCP> \
+  --display-mode plain \
+  --no-hw-monitor \
+  --output /root/bench-results/v6-v7-speed-sweep-20260529/glm/dcp<DCP>/mtp<MTP>-a16/result.json
+```
+
+`llm_decode_bench.py` version was `0.4.24`. `N/A` means the cell was skipped,
+failed to produce measured output, or is otherwise not a clean steady-state
+throughput number. DCP1 and DCP2 used reduced `max_model_len` only so the ctx0
+speed sweep would fit on the host; DCP4 and DCP8 used the full `202752`.
+
+| DCP | MTP | A16 | max model len | KV cache tokens | cc1 tok/s | cc1 acc | cc16 tok/s | cc16 acc | Notes |
+|---:|:---:|:---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | off | on | 65,536 | 106,752 | 54.3 | 0.000 | N/A | N/A | cc16 skipped/not present in result |
+| 1 | on | on | 65,536 | 75,136 | 92.4 | 0.351 | N/A | N/A | cc16 skipped/not present in result |
+| 2 | off | on | 131,072 | 188,672 | 48.3 | 0.000 | N/A | N/A | cc16 completed with no measured output tokens |
+| 2 | on | on | 131,072 | N/A | N/A | N/A | N/A | N/A | startup failed during FULL CUDA graph capture with NCCL illegal memory access |
+| 4 | off | on | 202,752 | 364,544 | 48.1 | 0.000 | 341.0 | 0.000 | clean |
+| 4 | on | on | 202,752 | 285,184 | 68.4 | 0.422 | 391.2 | 0.417 | clean |
+| 8 | off | on | 202,752 | 729,088 | 45.4 | 0.000 | N/A | N/A | cc16 capacity-limited/skipped |
+| 8 | on | on | 202,752 | 570,368 | 64.5 | 0.494 | 300.4 | 0.492 | clean |
+
+Raw artefacts:
+
+```text
+/root/bench-results/v6-v7-speed-sweep-20260529/glm/
+```
+
+## AWQ+MXFP8 DCP4 MTP LAVD Quality
+
+This result belongs to the currently running AWQ+MXFP8 L42-62 DCP4 MTP greedy
+instance, not the pure AWQ speed row above.
+
+```text
+profile:        lavd-test
+prompt:         profile:lavd-test
+prompt chars:   48,302
+requested runs: 10
+concurrency:    10
+max tokens:     omitted (server/model default)
+scoring:        ledger_lavd
+expected:       72, 46
+prompt sha256:  5c83674d5f0fd2a7
+dataset sha256: 612f8041bbca048c
+```
+
+Concurrency result:
+
+```text
+parallel  done/started  score                       stars       output tok p50  output tok p90  aggregate tok/s  avg request s
+-------------------------------------------------------------------------------------------------------------------------------
+10        10/10         EXACT 7 / NEAR 3 / FAIL 0   7/10 stars          33,780          40,126             38.3          903.5
+```
+
+Selected C=10 summary:
+
+```text
+completed:                  10/10
+score:                      EXACT 7 / NEAR 3 / FAIL 0
+hit max_tokens:             0
+completion tokens avg:      34,174
+completion tokens p50:      33,780
+completion tokens p90:      40,126
+completion tokens p99:      43,590
+elapsed avg:                903.5s
+TTFT avg:                   10.38s
+aggregate gen tok/s:        38.3
+mean per-request gen tok/s: 38.1
+```
+
+Interpretation: EXACT means the parsed final numeric pair is exactly `72,
+46.0`. NEAR means both count and hours are inside the configured tolerance.
+FAIL means the answer was unparseable or outside tolerance.
+
 ## Pending Rows
 
 Add future quant variants below this section using the same benchmark and KLD
@@ -226,5 +414,5 @@ Variant              Checkpoint / source                                      No
 Pure AWQ             QuantTrio/GLM-5.1-AWQ local snapshot                     speed row recorded above
 AWQ+MXFP8 L42-62     /root/kld/checkpoints/GLM-5.1-AWQ-MXFP8-L42-62-20260528  KLD measured, speed pending
 NVFP4-MTP            TBD                                                      pending v6 sweep row
-Mixed MXFP8 L42-62   TBD                                                      pending v6 sweep row
+NVFP4/MXFP8 L42-62   /root/kld/checkpoints/GLM-5.1-NVFP4-MXFP8-L42-62-BF16src-20260526  DCP/MTP speed row recorded above
 ```
