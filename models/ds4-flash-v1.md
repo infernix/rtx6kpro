@@ -99,7 +99,7 @@ PORT="${PORT:-5329}"
 TP_SIZE="${TP_SIZE:-4}"
 MTP="${MTP:-1}"
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.875}"
-MAX_MODEL_LEN="${MAX_MODEL_LEN:-130000}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-140000}"
 MAX_NUM_SEQS="${MAX_NUM_SEQS:-16}"
 MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-4096}"
 MAX_CUDAGRAPH_CAPTURE_SIZE="${MAX_CUDAGRAPH_CAPTURE_SIZE:-4096}"
@@ -170,62 +170,135 @@ The broken configuration was:
 
 It reproduced corrupted Python output and CJK leakage on short smoke tests.
 
-## Decode Sweep
+## Full Decode Sweep
 
-Command used for every row:
+Final full sweep settings:
 
 ```bash
 python3 /root/llm-inference-bench/llm_decode_bench.py \
   --host 127.0.0.1 \
   --port 5329 \
   --model DeepSeek-V4-Flash \
-  --skip-prefill \
-  --contexts 0k \
-  --concurrency 1,16,64 \
+  --contexts 0,16k,32k,64k,128k \
+  --concurrency 1,2,4,8,16 \
   --duration 30 \
+  --dcp-size 1 \
+  --kv-budget KV_TOKENS \
+  --token-targeting exact \
   --max-tokens 8192 \
   --display-mode plain \
   --output OUT.json
 ```
 
+TP2 was also probed with `32,64,128` concurrency; values above `MAX_NUM_SEQS=16`
+are capacity-limited and hidden in the headline. `MAX_MODEL_LEN=140000` is
+required because benchmark `128k` is `131,072` prompt tokens and the request
+also reserves `max_tokens=8192`.
+
 Results are under:
 
 ```text
-/root/bench-results/ds4-flash-nameless-20260605/
+/root/bench-results/ds4-flash-v1-full-exact-140k-20260605/
 ```
+
+### Prefill Scout Speed
+
+Client prompt tok/s from integrated scout requests:
+
+| Profile | 8k | 16k | 32k | 64k | 128k |
+|---|---:|---:|---:|---:|---:|
+| TP2 no-MTP | 6,754 | 6,686 | 6,568 | 6,320 | 5,856 |
+| TP2 MTP | 6,529 | 6,411 | 6,283 | 6,043 | 5,605 |
+| TP4 no-MTP | 8,177 | 8,132 | 7,964 | 7,621 | 7,001 |
+| TP4 MTP | 7,962 | 7,850 | 7,639 | 7,334 | 6,757 |
+
+### TP2 No-MTP
 
 Aggregate decode tok/s:
 
-| TP | MTP | cc1 | cc16 | cc64 |
-|---:|---:|---:|---:|---:|
-| 2 | off | 110.6 | 682.3 | capacity-limited, effective 16/64 |
-| 2 | on | 190.3 | 879.8 | capacity-limited, effective 16/64 |
-| 4 | off | 129.8 | 966.7 | not fit / skipped |
-| 4 | on | 241.7 | 1341.0 | not fit / skipped |
+| ctx \ conc | 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 117.5 | 198.3 | 322.7 | 482.7 | 711.3 | capacity-limited | ∅ | ∅ |
+| 16k | 116.5 | 193.6 | 307.8 | 451.2 | 625.5 | ∅ | ∅ | ∅ |
+| 32k | 116.2 | 192.1 | 306.9 | 441.2 | ∅ | ∅ | ∅ | ∅ |
+| 64k | 113.8 | 189.4 | 301.5 | ∅ | ∅ | ∅ | ∅ | ∅ |
+| 128k | 111.0 | 181.6 | ∅ | ∅ | ∅ | ∅ | ∅ | ∅ |
 
-Per-request tok/s:
+### TP2 MTP
 
-| TP | MTP | cc1 | cc16 | cc64 |
-|---:|---:|---:|---:|---:|
-| 2 | off | 110.6 | 42.6 | capacity-limited |
-| 2 | on | 190.3 | 55.0 | capacity-limited |
-| 4 | off | 129.8 | 60.4 | not fit / skipped |
-| 4 | on | 241.7 | 83.8 | not fit / skipped |
+Aggregate decode tok/s:
+
+| ctx \ conc | 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 190.0 | 300.6 | 386.0 | 644.0 | 873.3 | capacity-limited | ∅ | ∅ |
+| 16k | 191.3 | 228.7 | 375.2 | 543.8 | ∅ | ∅ | ∅ | ∅ |
+| 32k | 203.3 | 272.7 | 365.1 | 518.9 | ∅ | ∅ | ∅ | ∅ |
+| 64k | 186.8 | 221.6 | 365.2 | ∅ | ∅ | ∅ | ∅ | ∅ |
+| 128k | 162.3 | 279.1 | ∅ | ∅ | ∅ | ∅ | ∅ | ∅ |
+
+Average server speculative acceptance:
+
+| ctx \ conc | 1 | 2 | 4 | 8 | 16 |
+|---|---:|---:|---:|---:|---:|
+| 0 | 76.6% | 68.7% | 52.4% | 72.2% | 67.4% |
+| 16k | 74.0% | 46.4% | 64.0% | 62.7% | ∅ |
+| 32k | 85.8% | 61.7% | 59.0% | 61.0% | ∅ |
+| 64k | 59.2% | 29.2% | 44.5% | ∅ | ∅ |
+| 128k | 72.6% | 73.2% | ∅ | ∅ | ∅ |
+
+### TP4 No-MTP
+
+Aggregate decode tok/s:
+
+| ctx \ conc | 1 | 2 | 4 | 8 | 16 |
+|---|---:|---:|---:|---:|---:|
+| 0 | 140.3 | 250.6 | 422.7 | 664.9 | 991.9 |
+| 16k | 139.1 | 247.9 | 408.2 | 622.6 | 894.3 |
+| 32k | 138.7 | 242.9 | 403.4 | 617.3 | 869.4 |
+| 64k | 135.4 | 237.7 | 391.4 | 592.7 | 825.2 |
+| 128k | 131.2 | 226.2 | 361.5 | 536.5 | 735.2 |
+
+### TP4 MTP
+
+Aggregate decode tok/s:
+
+| ctx \ conc | 1 | 2 | 4 | 8 | 16 |
+|---|---:|---:|---:|---:|---:|
+| 0 | 240.7 | 414.2 | 446.5 | 712.1 | 384.3 |
+| 16k | 249.2 | 405.4 | 443.0 | 555.4 | 744.9 |
+| 32k | 238.4 | 410.2 | 489.6 | 567.8 | warmup-limited |
+| 64k | 245.2 | 323.3 | 350.4 | 502.8 | warmup-limited |
+| 128k | 216.4 | warmup-limited | 469.8 | 516.8 | warmup-limited |
+
+Average server speculative acceptance:
+
+| ctx \ conc | 1 | 2 | 4 | 8 | 16 |
+|---|---:|---:|---:|---:|---:|
+| 0 | 54.8% | 72.1% | 42.3% | 28.9% | 0.0% |
+| 16k | 83.5% | 73.8% | 34.1% | 14.9% | 0.0% |
+| 32k | 76.0% | 76.9% | 62.7% | 15.6% | warmup-limited |
+| 64k | 79.0% | 58.8% | 24.1% | 16.0% | warmup-limited |
+| 128k | 78.0% | warmup-limited | 73.2% | 30.4% | warmup-limited |
 
 Raw JSON:
 
 ```text
-/root/bench-results/ds4-flash-nameless-20260605/tp2-nomtp-cc1-16-64.json
-/root/bench-results/ds4-flash-nameless-20260605/tp2-mtp-cc1-16-64.json
-/root/bench-results/ds4-flash-nameless-20260605/tp4-nomtp-cc1-16-64.json
-/root/bench-results/ds4-flash-nameless-20260605/tp4-mtp-cc1-16-64.json
+/root/bench-results/ds4-flash-v1-full-exact-140k-20260605/tp2-mtp0-full.json
+/root/bench-results/ds4-flash-v1-full-exact-140k-20260605/tp2-mtp1-full.json
+/root/bench-results/ds4-flash-v1-full-exact-140k-20260605/tp4-mtp0-full-c1-16.json
+/root/bench-results/ds4-flash-v1-full-exact-140k-20260605/tp4-mtp1-full-c1-16.json
 ```
 
 ## Notes
 
-`cc64` is not a useful headline for this profile because `MAX_NUM_SEQS=16` and
-the runner either skips or records it as capacity-limited. Use cc1 and cc16 as
-the comparable kernel/scheduler signal for this page.
+`cc32+` is not a useful headline for this profile because `MAX_NUM_SEQS=16`.
+TP4 was therefore rerun as a clean `c=1,2,4,8,16` matrix after confirming that
+cc32/64/128 only exercise queue detection.
+
+TP4 MTP is not uniformly better. It is strong at cc1/cc2, but several long or
+high-concurrency cells show speculative acceptance collapse. The worst case in
+the server log was repeated `0.0%` acceptance at cc16, so use TP4 no-MTP as the
+safer production default until this is understood.
 
 The server logs show B12X PCIe oneshot allreduce for TP groups and PYNCCL for
 EP groups. FlashInfer autotune is enabled, but this DS4 B12X path logs that no
