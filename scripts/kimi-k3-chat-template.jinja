@@ -1,0 +1,7 @@
+{#
+  Kimi K3 renders chat with TikTokenTokenizer.apply_chat_template(), not with
+  Jinja.  vLLM nevertheless requires a non-empty template to pass its chat
+  template resolution guard.  The custom tokenizer ignores this template and
+  performs the model's segment-aware XTML encoding itself.
+#}
+{{ messages }}

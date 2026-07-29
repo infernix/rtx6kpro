@@ -1,13 +1,14 @@
 # Kimi Runbook Hub
 
 Use this page as the stable entry point for Kimi models on RTX PRO 6000
-Blackwell. The Kimi pages include both current Kimi-K2.7-Code DFlash work and
-older Kimi-K2.6 regression/debugging notes.
+Blackwell. The Kimi pages include the TP16 Kimi K3 MXFP4/NF3 work, current
+Kimi-K2.7-Code DFlash work, and older Kimi-K2.6 regression/debugging notes.
 
 ## Current Recommendation
 
 | Need | Page |
 |---|---|
+| Run Kimi K3 on 16 GPUs, reproduce the 4.05-bpw quant, or continue its vLLM/SparkInfer work | [Kimi K3 TP16 MXFP4/NF3](kimi-k3.md) |
 | Run Kimi-K2.7-Code on the current Fathomless line | [Kimi-K2.7-Code v3](kimi-k27-code_v3.md) |
 | Reproduce the Eldritch Kimi-K2.7-Code recipe | [Kimi-K2.7-Code v2](kimi-k27-code_v2.md) |
 | Reproduce Black Benediction Kimi-K2.7-Code | [Kimi-K2.7-Code](kimi-k27-code.md) |
@@ -17,7 +18,9 @@ older Kimi-K2.6 regression/debugging notes.
 
 | Area | Current guidance |
 |---|---|
-| Current target | `moonshotai/Kimi-K2.7-Code` |
+| Kimi K3 target | `moonshotai/Kimi-K3` revision `2496450e92e425c886db095102a52a6682ca3970` |
+| Kimi K3 layout | TP16, 4.05-bpw MXFP4/NF3 routed experts; DCP1 decode or DCP16 1M capacity |
+| Kimi-K2.7 target | `moonshotai/Kimi-K2.7-Code` |
 | Draft path | DFlash, documented in the Kimi-K2.7 v3 page |
 | Runner | vLLM V2 |
 | Common parser setup | `--reasoning-parser kimi_k2`, `--tool-call-parser kimi_k2`, `--enable-auto-tool-choice` |
@@ -27,6 +30,7 @@ older Kimi-K2.6 regression/debugging notes.
 
 | Page | Status | Why keep it |
 |---|---|---|
+| [Kimi K3 TP16 MXFP4/NF3](kimi-k3.md) | Current | Complete quant, runtime, InstantTensor, forkserver, DCP1 speed, and DCP16 1M handoff. |
 | [Kimi-K2.7-Code v3](kimi-k27-code_v3.md) | Current | Fathomless Kimi DFlash validation and patch overlay notes. |
 | [Kimi-K2.7-Code v2](kimi-k27-code_v2.md) | Historical | Eldritch Kimi runtime. |
 | [Kimi-K2.7-Code](kimi-k27-code.md) | Historical | Black Benediction recipe. |

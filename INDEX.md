@@ -99,6 +99,7 @@ python3 scripts/generate-wiki-index.py > INDEX.md
 - [Kimi-K2.7-Code on Black Benediction](models/kimi-k27-code.md) - `models/kimi-k27-code.md`
 - [Kimi-K2.7-Code v2 on Eldritch](models/kimi-k27-code_v2.md) - `models/kimi-k27-code_v2.md`
 - [Kimi-K2.7-Code v3 on Fathomless](models/kimi-k27-code_v3.md) - `models/kimi-k27-code_v3.md`
+- [Kimi K3 TP16 MXFP4/NF3 on 16x RTX PRO 6000 Blackwell](models/kimi-k3.md) - `models/kimi-k3.md`
 - [Kimi Runbook Hub](models/kimi.md) - `models/kimi.md`
 - [Legacy Model Runbooks](models/legacy.md) - `models/legacy.md`
 - [MiMo-V2.5-Pro on RTX PRO 6000 Blackwell](models/mimo-v25-pro/README.md) - `models/mimo-v25-pro/README.md`
@@ -329,6 +330,8 @@ python3 scripts/generate-wiki-index.py > INDEX.md
 - [Daily Summary — 2026-07-24](daily-summaries/2026-07/2026-07-25.md) - `daily-summaries/2026-07/2026-07-25.md`
 - [Daily Summary — 2026-07-25](daily-summaries/2026-07/2026-07-26.md) - `daily-summaries/2026-07/2026-07-26.md`
 - [Daily Summary — 2026-07-26](daily-summaries/2026-07/2026-07-27.md) - `daily-summaries/2026-07/2026-07-27.md`
+- [Daily Summary — 2026-07-27](daily-summaries/2026-07/2026-07-28.md) - `daily-summaries/2026-07/2026-07-28.md`
+- [Daily Summary — 2026-07-28](daily-summaries/2026-07/2026-07-29.md) - `daily-summaries/2026-07/2026-07-29.md`
 - [Daily Summaries](daily-summaries/README.md) - `daily-summaries/README.md`
 
 ## Other Documents

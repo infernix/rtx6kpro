@@ -1,0 +1,9 @@
+FROM voipmonitor/vllm:gilded-gnosis-v20-vllm34f26c2-side7739a-fi801d57a-cu132-20260728-r9
+
+# Build context must be the exact-tested vLLM branch.  Copying the complete
+# Python package preserves the reconstructed r9 integration plus Kimi K3 work.
+COPY vllm/ /opt/venv/lib/python3.12/site-packages/vllm/
+
+LABEL org.opencontainers.image.title="Kimi K3 kquant TP16 bring-up"
+LABEL local-inference-lab.vllm-exact-tested="e8154512afea7ab2d196af12f049d6fbf0b4a77a"
+LABEL local-inference-lab.kquant-format="mxfp4-nf3-4p05"

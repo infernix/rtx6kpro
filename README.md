@@ -17,7 +17,7 @@ If you just want to run a model, use these stable hub pages first:
 |---|---|---|
 | GLM-5.2 | [GLM-5.2 Runbook Hub](models/glm-5.2.md) | Fathomless vLLM, NVFP4, online FP8/MXFP8, B12X, DCP, MTP, KLD. |
 | DeepSeek-V4-Flash / DSpark | [DeepSeek-V4-Flash Runbook Hub](models/deepseek-v4-flash.md) | Standard checkpoint, MTP, DSpark, B12X, Lucifer, CUTLASS. |
-| Kimi | [Kimi Runbook Hub](models/kimi.md) | Kimi-K2.7-Code, DFlash, parser/tool-call runtime. |
+| Kimi | [Kimi Runbook Hub](models/kimi.md) | Kimi K3 TP16 MXFP4/NF3, Kimi-K2.7-Code, DFlash, parser/tool-call runtime. |
 | Xiaomi MiMo | [MiMo Runbook Hub](models/mimo.md) | MiMo V2.5 Pro FP4-DFlash. |
 | GLM-5.1 | [GLM-5.1 Runbook Hub](models/glm-5.1.md) | Historical GLM-5.1, KLD methodology, older B12X/SGLang work. |
 | Legacy / secondary models | [Legacy Model Runbooks](models/legacy.md) | DeepSeek-V4-Pro, GLM-4.7, Qwen, MiniMax, older Kimi pages. |
@@ -51,6 +51,7 @@ Need the complete map of every Markdown page?
 | GLM-5.2 MXFP4 | [GLM-5.2 FP8 + MXFP4 Experts](models/glm5.2_mxfp4.md) | Native MXFP4 expert checkpoint path and A8 serving notes. |
 | DS4 current quick start | [DS4 DSpark v10](models/ds4dspark-v10.md) | Recommended TP2 launch defaults and Fathomless validation. |
 | DS4 full reference | [DS4 DSpark v9](models/ds4dspark-v9.md) | Full DSpark and standard MTP sweep reference. |
+| Kimi K3 TP16 | [Kimi K3 MXFP4/NF3](models/kimi-k3.md) | 4.05-bpw quant, DCP1 decode, DCP16 1M KV, InstantTensor, and forkserver handoff. |
 | Kimi-K2.7-Code | [Kimi-K2.7-Code v3](models/kimi-k27-code_v3.md) | Fathomless Kimi DFlash validation. |
 | MiMo FP4-DFlash | [MiMo FP4-DFlash v3](models/xiaomi-mimo-v2.5-pro-fp4-dflash_v3.md) | Current MiMo DFlash validation and fix notes. |
 
