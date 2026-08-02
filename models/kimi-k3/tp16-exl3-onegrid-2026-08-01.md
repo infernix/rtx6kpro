@@ -1,181 +1,226 @@
-# Kimi K3 TP16 MXFP4/EXL3 one-grid progress
+# Kimi K3 TP16 MXFP4/EXL3 one-grid
 
-Status date: 2026-08-01. This page records the development state before the
-first full-artifact E2E load. All numerical and compiler gates below were run
-without loading Kimi K3 as a model. The already-running full-MXFP4 server was
-left untouched.
+Status date: 2026-08-02. This is the reproducible state of the no-EP TP16
+Kimi K3 hybrid, including quantization, InstantTensor loading, one-grid MoE,
+1M KV capacity, KLD, and decode measurements.
 
-## Outcome so far
+## Result
 
-Kimi K3's 3,072-wide routed experts split to exactly 192 channels per rank at
-TP16. The implemented path has no expert parallelism, expert padding, or
-TP8/PP2 fallback:
+The production artifact is:
 
-- the retained experts stay in their original ModelOpt MXFP4 representation;
-- demoted experts are quantized after TP sharding as EXL3-3 MCG;
-- each rank-local 192-channel transform is H128 followed by an H64 tail;
-- all 896 global expert IDs remain addressable, with a 32-bit descriptor
-  `(tier << 16) | tier_local_id`;
-- decode M=1/top-k=16 runs both tiers in one cooperative SparkInfer grid;
-- prefill and larger M retain the serial correctness path for now.
+```text
+/mnt/luke/models/Kimi-K3-EXL3-3p09-MXFP4-44p0-TP16-1M-20260801-serve
+```
 
-This is the same broad one-grid strategy used by GLM's Grid188 path, but it is
-not the same kernel: K3 needs original MXFP4 plus full-rotation EXL3, 896 route
-prefixes, rank-local H64 tails, and per-layer tier counts.
+It contains all 896 experts per MoE layer. Experts selected by the allocation
+stay in their original ModelOpt MXFP4 representation; the remainder are
+EXL3-3 MCG quantized after TP16 sharding. K3's 3,072-wide routed intermediate
+dimension becomes 192 channels per rank, represented as an H128 transform plus
+an H64 tail. There is no expert parallelism, expert padding, pipeline
+parallelism, or TP8 fallback.
 
-The old artifact at
-`/mnt/luke/models/Kimi-K3-EXL3-3p09-MXFP4-44p0-TP16-1M-20260801` is **not a
-valid TP16-local quant**. It is a size-only 44% repack of a globally H128
-quantized artifact (manifest schema 2) and lacks `tp_local_quantization`,
-`compatible_tp_sizes`, `tp_local_intermediate_size`, and
-`intermediate_hadamard_blocks`. The new loader rejects it rather than serving
-silently incorrect rank slices.
+Decode M=1/top-k=16 executes the MXFP4 and EXL3 tiers in one cooperative
+SparkInfer grid. The packaged artifact has 92 MoE layers and 81 unique
+`(MXFP4, EXL3)` expert-count splits.
 
-## Published branches (no PRs)
+The final B12X E2E run established:
+
+- InstantTensor weight iteration: 146.17 seconds;
+- total model load: 164.051 seconds, 75.28 GiB/rank;
+- explicit FP8 KV allocation: 14 GiB/rank;
+- usable KV cache: 1,084,486 tokens, enough for `max_model_len=1,048,576`;
+- concurrency at maximum model length: 1.03x;
+- GPU use after startup: about 94,033 MiB/rank, 3,220 MiB free/rank;
+- all 1,472 rank-layer one-grid arms completed, with zero fallback/errors;
+- true single-request decode: 34.6667 tok/s mean over three 384-token runs.
+
+The otherwise identical 31.2288 tok/s baseline used PyNCCL because the
+image's generic `VLLM_PCIE_ALLREDUCE_BACKEND=cpp` cannot serve world size 16.
+The TP16 SparkInfer oneshot raises decode by 3.4379 tok/s, or 11.01%. This
+does not include prefill.
+
+## Published branches (no PR)
 
 | Repository | Branch / head | Purpose |
 |---|---|---|
-| SparkInfer | [`codex/kimi-k3-mxfp4-exl3-onegrid-20260801`](https://github.com/local-inference-lab/sparkinfer/tree/codex/kimi-k3-mxfp4-exl3-onegrid-20260801) @ `cf77fab` | One-grid kernel, exact 896-expert route packing, actual/synthetic harnesses; includes Luke's `origin/fix/w4a16-planning-capture-current-20260801` stack through `0191725` |
-| vLLM | [`codex/kimi-k3-tp16-mxfp4-exl3-onegrid-20260801`](https://github.com/local-inference-lab/vllm/tree/codex/kimi-k3-tp16-mxfp4-exl3-onegrid-20260801) @ `9f91322e3` | Fail-closed TP-local loader, exact per-layer one-grid preparation and decode dispatch |
-| kquant | [`codex/kimi-k3-tp16-local-exl3-onegrid-20260801`](https://github.com/local-inference-lab/kquant/tree/codex/kimi-k3-tp16-local-exl3-onegrid-20260801) @ `f45264c` | Quantize after TP16 sharding, atomic/resumable per-layer replacement, manifest/artifact validation and smoke harness |
-| ExLlamaV3 fork | [`codex/kimi-k3-tp16-local-hadamard-20260801`](https://github.com/voipmonitor/exllamav3/tree/codex/kimi-k3-tp16-local-hadamard-20260801) @ `c1518ee` | H128+H64 EXL3 transforms and bounded tile scratch |
+| SparkInfer | [`codex/kimi-k3-mxfp4-exl3-onegrid-20260801`](https://github.com/local-inference-lab/sparkinfer/tree/codex/kimi-k3-mxfp4-exl3-onegrid-20260801) @ `ae87654` | Mixed MXFP4/EXL3 one-grid, fixed TP16 Trellis planning/tail dispatch, TP16 PCIe oneshot, and model-free benchmarks |
+| vLLM | [`codex/kimi-k3-tp16-mxfp4-exl3-onegrid-20260801`](https://github.com/local-inference-lab/vllm/tree/codex/kimi-k3-tp16-mxfp4-exl3-onegrid-20260801) @ `2bd7f0478` | TP-local artifact loader, one-grid dispatch, fixed-capacity MXFP4 prompt tails, production launcher, and exact decode benchmark |
+| kquant | [`codex/kimi-k3-tp16-local-exl3-onegrid-20260801`](https://github.com/local-inference-lab/kquant/tree/codex/kimi-k3-tp16-local-exl3-onegrid-20260801) @ `f45264c` | Resumable TP16-local EXL3 conversion, validation, and packaging |
+| ExLlamaV3 fork | [`codex/kimi-k3-tp16-local-hadamard-20260801`](https://github.com/voipmonitor/exllamav3/tree/codex/kimi-k3-tp16-local-hadamard-20260801) @ `c1518ee` | H128+H64 EXL3 transforms and bounded conversion scratch |
 
-Do not merge the vLLM branch into `dev/gg-k3` until the full artifact passes
-load, decode, long-generation, and KLD gates. No PR was created.
+These are development branches based on Luke's K3 work; no PR was opened.
 
-## Model-free gates already passed
+## Reproduce the server
 
-### Quantizer and real expert
-
-The real-expert smoke test opens only the packed weight and scale for
-w1/w3/w2 of one expert (six tensors total):
+The vLLM branch contains the complete launcher:
 
 ```bash
-export PYTHONPATH=/tmp/kquant-k3-onegrid:/tmp/exllamav3-k3-tp16
-python scripts/smoke_exl3_tp_local_expert.py \
-  --layer 1 --expert 7 --tp-size 16 --batch 32 \
-  --temp-batch-size 128 --device cuda:0
+SPARKINFER_SRC=/path/to/sparkinfer \
+  ./serve-kimi-k3-exl3-tp16-1m.sh
 ```
 
-Measured with the full model still resident on the GPU:
+Its important fixed parameters are:
 
-- 8.2-8.8 seconds at scratch batch 128, peak allocation 922 MiB;
-- 11.0 seconds at scratch batch 64, peak 664 MiB;
-- 36.5 seconds at scratch batch 16, peak 470.5 MiB;
-- proxy errors: w1 `0.0174386`, w3 `0.0174443`, w2 `0.0174363`;
-- merged ABI: w1/w3 trellis `[224,192,48]`, w2 `[192,224,48]`.
+```text
+TP=16, PP=1, DCP=1, EP=false
+max_model_len=1048576
+max_num_seqs=1
+max_num_batched_tokens=256
+kv_cache_memory_bytes=15032385536
+kv_cache_dtype=fp8
+load_format=instanttensor
+cudagraph=PIECEWISE, capture size [1]
+VLLM_PCIE_ALLREDUCE_BACKEND=b12x
+```
 
-Scratch batch 256 correctly OOMed while the full model left only about 2 GiB
-free. It is intended for the offline rebuild after the model is stopped.
+The launcher intentionally overrides the GG image's generic `cpp` all-reduce
+and graph-memory-estimation defaults. To make a deliberate A/B override, use
+the `K3_PCIE_*` or `K3_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS` variables defined
+in the script, rather than inheriting the image defaults accidentally.
 
-### Actual-weight kernel closure
+Current container overlays and runtime paths on this machine are:
 
-`benchmarks/check_kimi_k3_actual_tp16_expert.py` caches the approximately
-one-expert quant output and then performs all subsequent kernel iterations
-without checkpoint I/O. Rank 0 and rank 15 both passed:
+```text
+container: cbc3ead9480b (luke)
+vLLM:      /tmp/vllm-onegrid-test.Xj0hv9
+SparkInfer:/tmp/sparkinfer-k3-onegrid
+ExLlamaV3: /tmp/exllamav3-k3-tp16
+kquant:    /tmp/kquant-k3-onegrid
+PID file:  /mnt/luke/k3-tp16-exl3-onegrid.pid
+log:       /mnt/luke/k3-tp16-exl3-onegrid-tp16ar-20260802T101927Z.log
+```
 
-- checkpoint tensors opened on cached runs: 0;
-- extra peak allocation: 9.4 MiB;
-- serial full-rotation Trellis vs mixed one-grid relative L2: `0.0`;
-- CUDA graph replay: bit-exact with eager output.
+InstantTensor does not create a second resident model copy. It selects tensors
+through the checkpoint index and streams each physical tensor directly to its
+consumer. `INSTANTTENSOR_BUFFER_SIZE=536870912` was used. The remaining long
+startup phase is not weight I/O: compiling/arming the 81 unique one-grid layer
+splits took 21 minutes 53 seconds after the 2.4-minute weight iteration. The
+complete engine profile/KV/warmup phase took 1,350.72 seconds on this cold run.
+SparkInfer's object-cache key includes the fingerprint of the entire
+SparkInfer source package and the physical GPU UUID. Consequently, even an
+unrelated SparkInfer source edit causes one cold 81-split rebuild on all 16
+devices; an unchanged overlay can reuse the objects on the next restart.
 
-The synthetic production-geometry harness also passed mixed, MXFP4-only, and
-EXL3-only routes. Mixed relative L2 was `4.0473e-4`; graph replay drift was
-zero. The measured ~0.046 ms synthetic graph time is a kernel harness number,
-not an E2E model throughput claim.
+## Bugs found and fixed
 
-### Every real per-layer split
+1. The TP16-local EXL3 artifact declares its H128+H64 contract. The loader
+   rejects globally quantized or incompatible artifacts instead of silently
+   slicing the wrong transform.
+2. Lazy W4A16 execution now preserves the prepared Trellis tile configuration.
+   K3 TP16 projection-major I=192 requires N64 FC1 tiles; the generic M=256
+   heuristic incorrectly selected N256.
+3. Trellis bindings select the smallest already-prewarmed launch capacity
+   covering the live token count and the matching prewarmed top-k sum launch.
+   Prompt tails no longer trigger a new kernel specialization.
+4. Ordinary MXFP4 planning initializes the neutral Hadamard-tail metadata,
+   fixing an `UnboundLocalError` outside the Trellis path.
+5. Original-MXFP4 prompt tails pad only the token-independent MoE invocation
+   to the profiled M=256 capacity, then trim the output. Decode stays M=1.
+6. SparkInfer PCIe oneshot now dispatches world size 16 in both plain and
+   fused all-reduce+add+RMSNorm kernels. The underlying ABI was already sized
+   for `kMaxRanks=16`; the Python whitelist and CUDA dispatch cases were
+   missing. The current K3 server uses the plain operation: breakable CUDA
+   graphs disable vLLM's Inductor pipeline, so its `fuse_allreduce_rms` pass
+   cannot currently wire the otherwise validated fused kernel into the model.
 
-The allocation contains 81 unique `(kept, EXL3)` counts across 92 MoE layers.
-All 81 variants were compiled without opening weights:
+The exact model-free TP16 communication gate is:
 
 ```bash
-python benchmarks/precompile_kimi_k3_mxfp4_exl3_onegrid.py \
-  /mnt/luke/models/Kimi-K3-EXL3-3p09-MXFP4-44p0-TP16-1M-20260801/allocation-exl3.json
+python benchmarks/benchmark_pcie_oneshot_tp16.py \
+  --world-size 16 --hidden-size 3584 \
+  --warmup 100 --iterations 1000
 ```
 
-Result: 81/81 in 302.49 seconds, slowest 4.39 seconds, 33,920 bytes shared
-memory, 145 registers/thread, and zero local-memory spill for every split
-from `2+894` through `650+246`.
+Measured twice on this host for the 7,168-byte K3 decode row:
 
-### Unit and loader tests
+| Path | Maximum rank latency |
+|---|---:|
+| SparkInfer TP16 oneshot | 14.38 us |
+| PyNCCL | 35.63 us |
+| SparkInfer fused AR+add+RMSNorm | 17.60 us |
 
-- kquant TP-local/artifact tests: 11/11;
-- ExL H128+H64 transform tests: 3/3;
-- vLLM hybrid configuration/geometry tests: 20/20;
-- InstantTensor small-shard, index-aware selection, and oversize fallback
-  tests: 3/3;
-- SparkInfer actual expert and synthetic GPU closure harnesses: pass.
+The plain collective is 2.48x faster than NCCL and both correctness checks
+pass. Evidence is in
+`/mnt/luke/k3-tp16-pcie-oneshot-model-free-20260802-rerun.jsonlog`.
 
-vLLM already contains `88721d90d` (`loader: bound InstantTensor GPU memory for
-Kimi K3`). Use `--load-format instanttensor`; optional
-`INSTANTTENSOR_BUFFER_SIZE` is expressed in bytes. No EXL-specific
-InstantTensor patch was required because the loader streams physical tensors
-by the model's shard index and consumes each tensor inline.
+## Decode benchmark
 
-## Safe full TP16-local rebuild
+`benchmarks/kimi_k3_decode_stream.py` sends the exact first 256
+token IDs of the canonical KLD window to `/v1/completions`, streams 384 output
+tokens with EOS ignored, and calculates:
 
-There are only about 294 GiB free while the invalid artifact occupies about
-1.2 TiB, so a second complete artifact cannot coexist. The new driver replaces
-one completed layer at a time through a temporary safetensors file and atomic
-rename. Sixteen concurrent temporary layer files fit in the available space;
-verify this again immediately before starting.
-
-The build must run only after the current model is intentionally stopped and
-all 16 GPUs are free. From the quantization container with the four branch
-sources checked out:
-
-```bash
-export KQUANT_EXL3_SHARED_SU=1
-export PYTHONPATH=/tmp/kquant-k3-onegrid:/tmp/exllamav3-k3-tp16
-
-python /tmp/kquant-k3-onegrid/scripts/pack_exl3_12gpu.py \
-  --dest /mnt/luke/models/Kimi-K3-EXL3-3p09-MXFP4-44p0-TP16-1M-20260801 \
-  --reuse-allocation \
-  --replace-unmarked \
-  --tp-size 16 \
-  --num-workers 16 \
-  --temp-batch-size 256 \
-  --build-id k3-exl3-tp16-h128h64-v1-20260801
+```text
+(completion_tokens - 1) / (timestamp_last - timestamp_first)
 ```
 
-Each layer receives a completion marker bound to build ID, TP size, H128/H64
-contract, shared-SU, codebook, shard size, and error-file size. A crash leaves
-`build_complete=false`; rerunning the identical command skips only verified
-layers and atomically rebuilds everything else. Packaging refuses an
-incomplete build.
+The authoritative NCCL runs are:
 
-With 46,162 EXL3 experts, the low-VRAM measurements imply hours rather than
-minutes for the real conversion. A conservative first estimate is 5-8 hours
-on 16 free GPUs at scratch batch 256; measure the first completed layers before
-publishing an ETA.
-
-After all 92 markers validate:
-
-```bash
-python /tmp/kquant-k3-onegrid/scripts/package_exl3_serve_dir.py \
-  /mnt/luke/models/Kimi-K3-EXL3-3p09-MXFP4-44p0-TP16-1M-20260801 \
-  /mnt/luke/models/Kimi-K3-EXL3-3p09-MXFP4-44p0-TP16-1M-20260801-serve \
-  --nonexpert /mnt/luke/models/Kimi-K3-mxfp8-nonexpert
+```text
+/mnt/luke/k3-tp16-exl3-onegrid-decode-run1-20260802T0953Z.json
+/mnt/luke/k3-tp16-exl3-onegrid-decode-run2-20260802T0953Z.json
+/mnt/luke/k3-tp16-exl3-onegrid-decode-run3-20260802T0953Z.json
 ```
 
-Run `kquant.artifact.validate_exl3_artifact()` before serving. It checks the
-allocation, build markers, TP transform metadata, serve config/index, and all
-safetensors headers without materializing payloads.
+They measured 31.2348, 31.2387, and 31.2128 tok/s. This is decode only, not
+prefill or vLLM's aggregated rolling metric.
 
-## Remaining E2E gates
+With the TP16 SparkInfer B12X path active, the authoritative runs are:
 
-1. Rebuild the actual TP16-local artifact with all GPUs free.
-2. Validate and package it; start vLLM with the published vLLM/SparkInfer
-   branches and `--load-format instanttensor`.
-3. Confirm logs show the K3 EXL3 one-grid being armed and executed, with no
-   serial fallback during M=1 decode.
-4. Measure true decode tokens/second separately from prefill and leave the
-   server running.
-5. Run deterministic short prompts, the long Tetris/SMB corruption harness,
-   and a generation beyond the prior deterministic failure token.
-6. Capture the same KLD suite and compare it with the full-MXFP4 reference in
-   `kld-reference-logits-32x2048.md`.
-7. Measure actual KV capacity; the one-grid metadata/buffers add only roughly
-   100 MiB per rank, but the 1M-token target is not considered proven until the
-   full runtime profile completes.
+```text
+/mnt/luke/k3-tp16-exl3-onegrid-b12x-decode-run1-20260802T1048Z.json
+/mnt/luke/k3-tp16-exl3-onegrid-b12x-decode-run2-20260802T1048Z.json
+/mnt/luke/k3-tp16-exl3-onegrid-b12x-decode-run3-20260802T1048Z.json
+```
+
+| Run | Decode tok/s | Decode interval |
+|---:|---:|---:|
+| 1 | 34.6999 | 11.0375 s |
+| 2 | 34.6561 | 11.0514 s |
+| 3 | 34.6440 | 11.0553 s |
+| **Mean** | **34.6667** | |
+
+The sample standard deviation is 0.02945 tok/s. All three streams contained
+exactly 384 timed token events and coherent text, with no NUL bytes or
+exclamation-mark collapse. The service log contains no error, traceback, or
+fallback after the requests.
+
+## KLD quality result
+
+The complete 32-window x 2,048-token comparison for this exact quant is:
+
+```text
+/mnt/luke/kld/kimi-k3-exl3-3p09-mxfp4-44p0-tp16-fp8kv1m-kld-32x2048-mixed-v1-20260801
+```
+
+It contains 65,504 compared positions and 39.98 GiB of logits. Results:
+
+| Metric | TP16 hybrid |
+|---|---:|
+| mean KL(reference || candidate) | 0.01715409 |
+| median KL | 0.00017697 |
+| p95 / p99 KL | 0.07146779 / 0.30196805 |
+| maximum KL | 4.26138 |
+| mean JS | 0.00407232 |
+| top-1 agreement | 97.4353% |
+| 95% window-bootstrap CI for mean KL | 0.01257895-0.02231703 |
+
+This is better than the TP12 artifact (mean KL 0.0199675, top-1 97.183%).
+The capture manifest used an earlier EP-enabled runtime, so these numbers prove
+the artifact's quantization quality, not the current no-EP execution speed.
+The canonical capture and comparison commands are documented in
+[`kld-reference-logits-32x2048.md`](kld-reference-logits-32x2048.md), with
+scripts under `models/kimi-k3/tools/`.
+
+## Operational notes
+
+- Use `/v1/completions` with token IDs for repeatable decode measurements;
+  chat rendering is not part of the speed result.
+- Startup logs must contain 92 layers x 16 ranks armed, one-grid execution,
+  and no serial fallback/error.
+- A non-256 prompt tail should not emit a new `size_m=<tail>` W4A16 compile
+  after the API becomes ready.
+- The 28-token prompt-tail smoke test completed over HTTP with no MoE compile,
+  fallback, or error. Its metrics are in
+  `/mnt/luke/k3-tp16-exl3-onegrid-b12x-tail28-smoke.json`.
+- The process recorded in `/mnt/luke/k3-tp16-exl3-onegrid.pid` was left
+  running after the tests.
