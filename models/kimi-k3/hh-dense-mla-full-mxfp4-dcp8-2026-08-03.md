@@ -136,19 +136,23 @@ The final full-model run used the optional clock profile and the same fixed
 256-token input for all three forced 1,024-token decode requests:
 
 ```text
-38.316351 tok/s
-38.016232 tok/s
-38.268720 tok/s
-mean:   38.200434 tok/s
-median: 38.268720 tok/s
+40.948979 tok/s
+41.401056 tok/s
+41.166727 tok/s
+mean:   41.172254 tok/s
+median: 41.166727 tok/s
 ```
 
-That is 9.39% above the rollback median and 0.40% above the unlocked HH
-median. The final InstantTensor checkpoint pass took 166.29 seconds; all
-ranks completed model construction in 191.98-192.62 seconds at 90.93 GiB per
-rank. It retained a 1,054,602-token physical cache and 1.01x concurrency for
-a 1,048,576-token request. The server log contained no CUDA, nonfinite,
-assertion, or traceback error after the smoke test and three measured runs.
+That is 17.67% above the rollback median and 8.01% above the unlocked HH
+median. An earlier clock-locked trio ran concurrently with Docker compression
+and a large registry upload and measured only 38.016-38.316 tok/s (38.269
+median); it is retained as host-load evidence, not used as the final gate.
+
+The final InstantTensor checkpoint pass took 166.29 seconds; all ranks
+completed model construction in 191.98-192.62 seconds at 90.93 GiB per rank.
+It retained a 1,054,602-token physical cache and 1.01x concurrency for a
+1,048,576-token request. The server log contained no CUDA, nonfinite,
+assertion, or traceback error after the smoke test and all measured runs.
 
 ## Reconstruct the source overlays
 
@@ -342,7 +346,7 @@ done
 Require coherent text, no nonfinite/CUDA error in the server log, and median
 decode throughput no lower than 34.9848 tok/s. The comparable HH target is
 38.1146 tok/s or better without clock locking. The final clock-profile gate
-passed at 38.2687 tok/s median.
+passed at 41.1667 tok/s median with the host otherwise idle.
 
 ## Profiling and rejected tuning knobs
 
