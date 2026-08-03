@@ -19,17 +19,21 @@ parallelism, pipeline parallelism, or model-level MoE padding.
 | Runtime base digest | `sha256:2c99435142dd10f85834eaf4c490cb3d4095318152f0cc4fb38c7623d7edb7ac` |
 | Full local commit tag | `voipmonitor/vllm:kimi-k3-hh-dense-mla-dcp8-it-local-full-20260803` |
 | Full local commit ID | `sha256:f453030864542a91babcbb3565ad185a87ff171a937fe18bf309f72e2270a3dc` |
-| vLLM | [`codex/kimi-k3-hh-dense-mla-dcp8-20260803`](https://github.com/local-inference-lab/vllm/tree/codex/kimi-k3-hh-dense-mla-dcp8-20260803) at `99506ed20241ad47a269247f691c902c2bf1f6b6` |
+| vLLM | [`codex/kimi-k3-hh-dense-mla-dcp8-20260803`](https://github.com/local-inference-lab/vllm/tree/codex/kimi-k3-hh-dense-mla-dcp8-20260803) at `6f1bcaa05ec603aba1e4b926c71aa8d4dcd8f05d` |
+| vLLM review | [`local-inference-lab/vllm#232`](https://github.com/local-inference-lab/vllm/pull/232), ready for review (not draft) |
 | vLLM HH base | `dev/heraldic-harbinger` at `bce8a43539e3f0db8e366a600142a236ad4d4904` |
 | SparkInfer | [`codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803`](https://github.com/local-inference-lab/sparkinfer/tree/codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803) at `f39c6bf26be9d92b65d1f031819289c8c1f084a1` |
 | SparkInfer production fix | `a84463014bba9933e69c67da0f8a983f9b1e149f` (the following commit adds benchmark tools only) |
+| SparkInfer review | [`local-inference-lab/sparkinfer#116`](https://github.com/local-inference-lab/sparkinfer/pull/116), ready for review (not draft) |
 | SparkInfer base | `master` at `77154c105f441777355df1817ab660a8151fb294` |
 | InstantTensor | version `0.1.9+consumer1` |
 | InstantTensor wheel SHA256 | `1077d0b8fe0d97ee4b759018e1dc8b801fd8bdc65802a8ff00f391043f6fbabf` |
 | Model | `moonshotai/Kimi-K3` snapshot `2496450e92e425c886db095102a52a6682ca3970` |
 
-No PR was opened. The two implementation branches and this documentation
-branch were pushed directly so work can continue without modifying mainline.
+The implementation remains isolated from mainline in the two review branches
+above. vLLM PR #232 contains the HH integration, Kimi DCP chunked-prefill fix,
+and bounded-workspace profile. SparkInfer PR #116 contains the native E8M0
+aligned-FC1 correctness fix. Both PRs are non-draft so automated review runs.
 
 Docker commit does not include bind mounts. The image is the runtime
 environment; the two pinned source branches and the model snapshot are also
@@ -63,6 +67,18 @@ planned native dense-MLA implementation. The vLLM integration:
   about 3.74 GiB/rank, which cannot fit beside the physical 1M cache;
 - uses InstantTensor directly, without a second safetensors loading pass.
 
+Kimi's fused prefill entry point originally called the non-DCP context path
+even when `dcp_world_size > 1`. On the second scheduler chunk that path read a
+rank-local KV shard as a complete cache and produced an illegal memory access.
+vLLM commit `6058224b7` dispatches chunked context to
+`_context_parallel_compute_prefill_context` under DCP and retains the old path
+for DCP1.
+
+The attention split is deliberate and unchanged from the HH base: decode uses
+SparkInfer `B12X_MLA`, while dense MLA prefill uses vLLM FlashAttention FA2.
+KDA prefill is a third, separate Triton path. No FlashInfer prefill selection
+change is part of the branch.
+
 The HH model had to shard the otherwise replicated BF16 QKV-A, routed-down,
 routed-up, and router projections to fit the unmodified checkpoint. The
 routed-up partial is combined with the shared-expert partial before one
@@ -88,11 +104,13 @@ DCP KV interleave: 1
 maximum model length: 1,048,576
 maximum sequences: 1
 maximum batched tokens: 256
+MLA chunked-prefill workspace: 32,768 tokens
 KV cache dtype: FP8 E4M3
 KV cache allocation: 1,860,000,000 bytes/rank
 GPU memory utilization: 0.985
 CUDA graph mode: PIECEWISE, capture size 1
 KDA prefill backend: Triton
+PyTorch CUDA allocator: expandable_segments:True
 served model name: Kimi-K3-MXFP4-HH-DenseMLA-DCP8-1M
 ```
 
@@ -111,11 +129,49 @@ Validated startup and capacity before clock tuning:
 
 | Item | Result |
 |---|---:|
-| InstantTensor/full weight load | 188.73-189.10 s across ranks |
+| InstantTensor checkpoint traversal | 164.84 s |
+| Full model construction | 188.69-189.02 s across ranks |
 | Model allocation | 90.93 GiB/rank |
 | Physical GPU KV cache | 1,054,602 tokens |
 | 1M request concurrency | 1.01x |
-| CUDA graph capture | about 4 s / 0.18 GiB |
+| CUDA graph capture | about 2 s / 0.18 GiB |
+
+## Long-prefill capacity gate
+
+The original 64k MLA context workspace consumes 81 MiB/rank under DCP8:
+`(65,536 + 65,536/8) * 576 * 2` bytes. It also permits up-projected K and V
+temporaries for all 64k context tokens to coexist. With the full
+1,860,000,000-byte KV allocation, a 64k request failed in FlashAttention's
+temporary `pad(v)` after processing about 60k tokens. The failed allocation
+was 84 MiB with only 81.25 MiB physically free. The base launcher already set
+`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`; repeating the test with
+that setting confirmed this was real headroom, not allocator fragmentation.
+
+Commit `6f1bcaa05` adds
+`VLLM_MLA_CHUNKED_PREFILL_WORKSPACE_SIZE`. The full-MXFP4 launcher defaults it
+to 32,768 tokens. Under DCP8 the persistent workspace becomes 40.5 MiB and the
+expanded context operands are bounded to half their previous row count.
+FlashAttention still computes the same exact attention and vLLM merges the
+additional context partial with online softmax; only the number of exact
+chunks changes.
+
+The E2E capacity run retained all 1,054,602 physical KV tokens and completed a
+direct-token-ID 65,536-token request:
+
+| Gate | Result |
+|---|---:|
+| 64k TTFT | 81.3695 s |
+| 64k effective prefill | 805.413 tok/s |
+| Completion tokens | 1 |
+| Post-gate 1,024-token decode | 38.3467 tok/s |
+| Decode TTFT | 0.2645 s |
+
+The decode result matches the prior unlocked 38.1146 tok/s median within run
+variance. Output remained coherent and the server log contained no CUDA,
+OOM, nonfinite, assertion, or traceback error. Raw reports are
+[`prefill-64k-full-mxfp4-dcp8-1m-ws32k-20260803.json`](benchmarks/prefill-64k-full-mxfp4-dcp8-1m-ws32k-20260803.json)
+and
+[`full-hh-ws32k-decode-1024.json`](benchmarks/full-hh-ws32k-decode-1024.json).
 
 The old stable median was 34.9848 decode tok/s. Three warmed 1,024-token runs
 on the new HH stack produced:
@@ -164,7 +220,7 @@ git clone --filter=blob:none --single-branch \
   https://github.com/local-inference-lab/vllm.git \
   /mnt/luke/vllm-k3-hh-dense-mla-dcp8
 git -C /mnt/luke/vllm-k3-hh-dense-mla-dcp8 checkout \
-  99506ed20241ad47a269247f691c902c2bf1f6b6
+  6f1bcaa05ec603aba1e4b926c71aa8d4dcd8f05d
 
 git clone --single-branch \
   --branch codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803 \
@@ -233,7 +289,12 @@ docker build --pull=false \
 ```
 
 The original container remains `cbc3ead9480b`. Port 8000 is not published;
-the host reaches it through the bridge address, currently `172.17.0.2`.
+resolve the current bridge address after each container creation:
+
+```bash
+docker inspect kimi-k3-hh --format \
+  '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+```
 
 Verify InstantTensor before loading:
 
@@ -305,10 +366,32 @@ Application startup complete
 Verify:
 
 ```bash
-curl -s http://172.17.0.2:8000/v1/models | jq \
+server_ip=$(docker inspect kimi-k3-hh --format \
+  '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+curl -s "http://${server_ip}:8000/v1/models" | jq \
   '.data[0] | {id, max_model_len}'
-curl -f http://172.17.0.2:8000/health
+curl -f "http://${server_ip}:8000/health"
 ```
+
+## 64k prefill capacity gate
+
+This sends exact token IDs, requests one streamed output token, and measures
+TTFT. Prefix caching must remain disabled for repeated measurements:
+
+```bash
+tools=models/kimi-k3/tools
+python "$tools/kimi-k3-prefill-stream.py" \
+  --url "http://${server_ip}:8000" \
+  --model Kimi-K3-MXFP4-HH-DenseMLA-DCP8-1M \
+  --token-file "$tools/decode-baseline-256-token-ids.json" \
+  --sizes 65536 \
+  --warmups 0 \
+  --runs 1 \
+  --output /tmp/kimi-k3-prefill-64k.json
+```
+
+Require `usage_prompt_tokens=65536`, one completion token, HTTP success, and
+no CUDA/OOM/nonfinite/traceback entry in the server log.
 
 ## Decode gate
 
@@ -323,7 +406,7 @@ out=/tmp/kimi-k3-hh-decode
 mkdir -p "$out"
 
 python "$tools/kimi-k3-decode-stream.py" \
-  --url http://172.17.0.2:8000 \
+  --url "http://${server_ip}:8000" \
   --model Kimi-K3-MXFP4-HH-DenseMLA-DCP8-1M \
   --token-file "$tools/decode-baseline-256-token-ids.json" \
   --prompt-tokens 256 \
@@ -333,7 +416,7 @@ python "$tools/kimi-k3-decode-stream.py" \
 
 for run_id in 1 2 3; do
   python "$tools/kimi-k3-decode-stream.py" \
-    --url http://172.17.0.2:8000 \
+    --url "http://${server_ip}:8000" \
     --model Kimi-K3-MXFP4-HH-DenseMLA-DCP8-1M \
     --token-file "$tools/decode-baseline-256-token-ids.json" \
     --prompt-tokens 256 \

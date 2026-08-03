@@ -1,0 +1,35 @@
+{
+  "created_at": "2026-08-03T10:37:00.434145+00:00",
+  "model": "Kimi-K3-MXFP4-HH-DenseMLA-DCP8-1M-WS32K",
+  "method": "OpenAI /v1/completions, direct token IDs, max_tokens=1, streamed TTFT",
+  "prefix_cache_requirement": "server-side prefix caching disabled",
+  "warmups_per_size": 0,
+  "measured_runs_per_size": 1,
+  "sizes": {
+    "65536": {
+      "warmups": [],
+      "measurements": [
+        {
+          "requested_prompt_tokens": 65536,
+          "usage_prompt_tokens": 65536,
+          "usage_completion_tokens": 1,
+          "ttft_seconds": 81.36948016902898,
+          "wall_seconds": 81.36957475799136,
+          "effective_prefill_tokens_per_second": 805.4125436694685,
+          "output_preview": " =",
+          "run": 1
+        }
+      ],
+      "summary": {
+        "median_ttft_seconds": 81.36948016902898,
+        "mean_ttft_seconds": 81.36948016902898,
+        "min_ttft_seconds": 81.36948016902898,
+        "max_ttft_seconds": 81.36948016902898,
+        "median_effective_prefill_tokens_per_second": 805.4125436694685,
+        "mean_effective_prefill_tokens_per_second": 805.4125436694685,
+        "min_effective_prefill_tokens_per_second": 805.4125436694685,
+        "max_effective_prefill_tokens_per_second": 805.4125436694685
+      }
+    }
+  }
+}
