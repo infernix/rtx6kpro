@@ -5,4 +5,5 @@
 - [Stable full-MXFP4 TP16/DCP8 Docker checkpoint and rollback](stable-full-mxfp4-dcp8-checkpoint-2026-08-03.md)
 - [HH + SparkInfer dense-MLA full-MXFP4 TP16/DCP8 runtime](hh-dense-mla-full-mxfp4-dcp8-2026-08-03.md)
 - [Full MXFP4 TP16/DCP8 with physical 1M KV and 2048-token prefill chunks](full-mxfp4-tp16-dcp8-1m-chunk2048-2026-08-03.md)
+- [Full MXFP4 TP16 with Inferact DSpark-7 speculative decoding](full-mxfp4-tp16-dspark7-inferact-2026-08-03.md)
 - [TP16 MXFP4/EXL3 one-grid development and reproduction](tp16-exl3-onegrid-2026-08-01.md)
