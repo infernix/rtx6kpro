@@ -232,12 +232,14 @@ Targeted validation completed before the full-model gate:
 
 - `tests/models/kimi_k3/test_tp_projection.py`: 4 passed;
 - `tests/v1/attention/test_b12x_mla.py`: 8 passed;
+- `tests/distributed/test_pynccl.py -k inplace_allreduce`: 1 passed on two
+  GPUs (13 deselected);
 - four-layer TP16/DCP8 exact-checkpoint 8k prefill: HTTP 200;
 - four-layer 128-token decode: 497.151 tok/s;
 - standalone output-buffer oracle: `max_abs=0` and CUDA graph replay passed;
 - Ruff, formatting checks, and `git diff --check`: clean.
 
-The new two-GPU PyNCCL regression checks both the reduced value and preservation
+The two-GPU PyNCCL regression checks both the reduced value and preservation
 of the original tensor `data_ptr()`. The production TP16 full-model run also
 exercised this in-place path on every 2048-token MoE prefill chunk.
 
