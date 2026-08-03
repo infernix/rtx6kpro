@@ -183,14 +183,14 @@ MLA contract: OK`, and `K3 target native-op preflight: OK`.
 ## Expected startup evidence
 
 ```text
-target Loading weights took 165.65 seconds
-draft Loading weights took 0.96 seconds
-Model loading took 91.94 GiB/rank and about 189.6 seconds
+target Loading weights took 163.85 seconds
+draft Loading weights took 0.80 seconds
+Model loading took 91.94 GiB/rank and about 188.8 seconds
 GPU KV cache size: 8,894 tokens
 Maximum concurrency for 8,192 tokens per request: 1.09x
 target: local_heads=6, kernel_heads=8, page_size=768
 draft: local_heads=4, kernel_heads=8, page_size=768
-Graph capturing finished in 6 secs, took 0.20 GiB
+Graph capturing finished in 8 secs, took 0.20 GiB
 Application startup complete
 ```
 
@@ -216,6 +216,12 @@ or aggregate prefill throughput.
 | 2 | 71.444 tok/s | 74.100 tok/s | 2.876 |
 | 3 | 73.724 tok/s | 76.244 tok/s | 2.954 |
 | median | 71.444 tok/s | 74.100 tok/s | 2.876 |
+
+After committing, the service was restarted from the exact pinned source and
+two additional forced 512-token smoke runs measured 72.826 and 72.464 wall
+tok/s. Their Prometheus time-per-output-token observations sum to
+`0.02643678` seconds, equivalent to 75.65 decode tok/s after averaging the two
+observations. This exact-commit restart therefore showed no regression.
 
 The non-speculative full-MXFP4 TP16/DCP8 baseline was 38.821 tok/s. DCP sizes
 differ because vLLM's DSpark implementation is not currently compatible with
