@@ -19,9 +19,10 @@ chunk-256 rollback point.
 | Validated vLLM commit | `b3b8a189e4010343b2d6b83451ed3c41d8b10ff9` |
 | FlashKDA allocation predecessor | `721e515069f8dd5b3162c1760cd78ac0f6ec3531` |
 | HH base before these two commits | `6f1bcaa05ec603aba1e4b926c71aa8d4dcd8f05d` |
-| Existing vLLM review | [`local-inference-lab/vllm#232`](https://github.com/local-inference-lab/vllm/pull/232), non-draft |
+| Earlier vLLM review | [`local-inference-lab/vllm#232`](https://github.com/local-inference-lab/vllm/pull/232), merged at `6f1bcaa05`; the two successor commits are pinned on the branch above |
 | SparkInfer branch | [`codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803`](https://github.com/local-inference-lab/sparkinfer/tree/codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803) |
 | SparkInfer commit | `f39c6bf26be9d92b65d1f031819289c8c1f084a1` |
+| SparkInfer review | [`local-inference-lab/sparkinfer#116`](https://github.com/local-inference-lab/sparkinfer/pull/116), merged |
 | Published runtime image | `voipmonitor/vllm:kimi-k3-hh-dense-mla-dcp8-it-20260803` |
 | Published runtime digest | `sha256:499c405bb849f9e8fad920ddd90053af60090b592906f34a64bca8a6481a5ce0` |
 | Exact current local image tag | `voipmonitor/vllm:kimi-k3-hh-dense-mla-dcp8-it-local-full-20260803` |

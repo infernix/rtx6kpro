@@ -20,20 +20,20 @@ parallelism, pipeline parallelism, or model-level MoE padding.
 | Full local commit tag | `voipmonitor/vllm:kimi-k3-hh-dense-mla-dcp8-it-local-full-20260803` |
 | Full local commit ID | `sha256:f453030864542a91babcbb3565ad185a87ff171a937fe18bf309f72e2270a3dc` |
 | vLLM | [`codex/kimi-k3-hh-dense-mla-dcp8-20260803`](https://github.com/local-inference-lab/vllm/tree/codex/kimi-k3-hh-dense-mla-dcp8-20260803) at `6f1bcaa05ec603aba1e4b926c71aa8d4dcd8f05d` |
-| vLLM review | [`local-inference-lab/vllm#232`](https://github.com/local-inference-lab/vllm/pull/232), ready for review (not draft) |
+| vLLM review | [`local-inference-lab/vllm#232`](https://github.com/local-inference-lab/vllm/pull/232), merged |
 | vLLM HH base | `dev/heraldic-harbinger` at `bce8a43539e3f0db8e366a600142a236ad4d4904` |
 | SparkInfer | [`codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803`](https://github.com/local-inference-lab/sparkinfer/tree/codex/kimi-k3-hh-dense-mla-dcp8-latest-20260803) at `f39c6bf26be9d92b65d1f031819289c8c1f084a1` |
 | SparkInfer production fix | `a84463014bba9933e69c67da0f8a983f9b1e149f` (the following commit adds benchmark tools only) |
-| SparkInfer review | [`local-inference-lab/sparkinfer#116`](https://github.com/local-inference-lab/sparkinfer/pull/116), ready for review (not draft) |
+| SparkInfer review | [`local-inference-lab/sparkinfer#116`](https://github.com/local-inference-lab/sparkinfer/pull/116), merged |
 | SparkInfer base | `master` at `77154c105f441777355df1817ab660a8151fb294` |
 | InstantTensor | version `0.1.9+consumer1` |
 | InstantTensor wheel SHA256 | `1077d0b8fe0d97ee4b759018e1dc8b801fd8bdc65802a8ff00f391043f6fbabf` |
 | Model | `moonshotai/Kimi-K3` snapshot `2496450e92e425c886db095102a52a6682ca3970` |
 
-The implementation remains isolated from mainline in the two review branches
-above. vLLM PR #232 contains the HH integration, Kimi DCP chunked-prefill fix,
-and bounded-workspace profile. SparkInfer PR #116 contains the native E8M0
-aligned-FC1 correctness fix. Both PRs are non-draft so automated review runs.
+The pinned branches preserve the exact validated pair. vLLM PR #232 contains
+the HH integration, Kimi DCP chunked-prefill fix, and bounded-workspace
+profile. SparkInfer PR #116 contains the native E8M0 aligned-FC1 correctness
+fix. Both reviews were merged.
 
 Docker commit does not include bind mounts. The image is the runtime
 environment; the two pinned source branches and the model snapshot are also
