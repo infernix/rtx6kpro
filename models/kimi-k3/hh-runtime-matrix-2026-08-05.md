@@ -5,7 +5,7 @@
 Use one immutable Kimi K3 image for all validated HH profiles:
 
 ```text
-voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r2-20260805@sha256:5b52837eac512b0500e547bd5e99940e1243678eca1c7f59e6261ba4a5a4c923
+voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r3-20260805@sha256:b9c780a20346caf05c1ad449e5ff319c432e117532cb0bef356aede20222b803
 ```
 
 The image pins vLLM PR #238 at
@@ -18,7 +18,7 @@ Profile selection:
 |---|---|---:|
 | Highest validated CC1 throughput | `dcp16-dspark` | about 106-115 tok/s at short context |
 | Exact target checkpoint, no speculative decoding | `dcp16-no-dspark` | 47.118 tok/s CC1; 204.559 tok/s aggregate CC8 |
-| Exact target checkpoint with DCP8 | `dcp8-no-dspark` | 45.660 tok/s CC1 median |
+| Exact target checkpoint with DCP8 | `dcp8-no-dspark` | 45.438 tok/s clean-image CC1 median |
 | Exact target weights plus BF16 DSpark | `dcp16-dspark-full` | functional reference profile; smaller scheduler budget |
 | Historical DCP8 speculative profile | `dcp8-dspark` | 99.65 tok/s CC1, but target shared experts are MXFP8 |
 
@@ -33,7 +33,7 @@ do not add weight quantization.
 |---|---|
 | vLLM | [PR #238](https://github.com/local-inference-lab/vllm/pull/238), commit `91a81414c72d0633e5d7292702c1f4611d5b7e4d` |
 | SparkInfer | [PR #118](https://github.com/local-inference-lab/sparkinfer/pull/118), commit `34bb490b28fd0742006a611c83c6b9883ed3d453` |
-| Docker recipe | [build/kimi-k3-hh-runtime-20260805](https://github.com/local-inference-lab/blackwell-llm-docker/tree/build/kimi-k3-hh-runtime-20260805), image-build commit `1bbe5125b509bc159717f1ae7a615de8322997e3` |
+| Docker recipe | [build/kimi-k3-hh-runtime-20260805](https://github.com/local-inference-lab/blackwell-llm-docker/tree/build/kimi-k3-hh-runtime-20260805), image-build commit `af5e90ef5cbc12e88dba67230d6cc3a85c6f31f9`, validated-runner/docs commit `8e0ec81a2500c947ce278ff2b0f048d4b26e897d` |
 | Target checkpoint | `moonshotai/Kimi-K3@2496450e92e425c886db095102a52a6682ca3970` |
 | Draft checkpoint | `Inferact/Kimi-K3-DSpark@cf6b8244620e7ea4b0651d214f28e89eac75bed6` |
 
@@ -74,7 +74,7 @@ HF_CACHE=/models/hf PORT=8001 NAME=kimi-k3-dcp8 \
 Equivalent direct launch for DCP8 target-only:
 
 ```bash
-KIMI_IMAGE='voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r2-20260805@sha256:5b52837eac512b0500e547bd5e99940e1243678eca1c7f59e6261ba4a5a4c923'
+KIMI_IMAGE='voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r3-20260805@sha256:b9c780a20346caf05c1ad449e5ff319c432e117532cb0bef356aede20222b803'
 
 docker run --rm \
   --name kimi-k3-hh-dcp8-no-dspark \
@@ -160,10 +160,11 @@ Validated 2026-08-05:
 |---|---:|
 | Physical FP8 KV | 1,054,602 tokens |
 | Model limit | 1,048,576 tokens |
-| CC1 decode runs | 45.789 / 45.660 / 45.019 tok/s |
-| CC1 median / mean | 45.660 / 45.490 tok/s |
-| Canonical 256-input/1024-output gate | 44.422 / 45.234 / 45.184 tok/s; 45.184 median |
-| InstantTensor tensor load / complete per-rank model load | 166.99 / 189.27 s |
+| Clean-image CC1 decode runs | 45.725 / 45.234 / 45.438 tok/s |
+| Clean-image CC1 median / mean | 45.438 / 45.466 tok/s |
+| Source-overlay CC1 reference | 45.789 / 45.660 / 45.019 tok/s; 45.660 median |
+| Source-overlay canonical 256-input/1024-output gate | 44.422 / 45.234 / 45.184 tok/s; 45.184 median |
+| Clean-image InstantTensor tensor load / complete per-rank model load | 162 / about 193.5 s |
 | Loaded model memory | 90.96 GiB/rank |
 | Final free VRAM | about 122-142 MiB/rank |
 
@@ -180,7 +181,9 @@ gathers over the full TP16 group. CUDA-graph checkpoint/capture now tracks both
 independent SparkInfer pools. This is a byte-preserving BF16/FP32 copy
 collective, not an arithmetic or precision change. The coding-prompt median
 improved from 38.054 to 45.660 tok/s (+19.99%); the exact canonical gate improved
-from 37.844 to 45.184 tok/s (+19.40%).
+from 37.844 to 45.184 tok/s (+19.40%). The subsequently published clean image
+reproduced the coding test at a 45.438 tok/s median, 0.49% below that source-overlay
+reference.
 
 DCP8 still trails the 47.118 tok/s DCP16 short-context result by about 3.1%.
 DCP8 halves the MLA collective payload, but it doubles local KV length per DCP
@@ -189,7 +192,9 @@ attention arithmetic, and the smaller attention geometry plus fixed launch and
 barrier costs can remain slightly less efficient at short context.
 
 The full-model measurement uses final SparkInfer PR head `34bb490` and vLLM PR
-head `91a81414c`. The published r2 image pins both exact commits.
+head `91a81414c`. The published r3 image pins both exact commits. It was started
+without source bind mounts and exposed the expected DCP8 attention pool plus
+independent TP16 projection pools for query widths 672 and 136.
 For larger prefill chunks, set `KIMI_SHARD_F_A=1` and increase
 `MAX_NUM_BATCHED_TOKENS`; that trades extra gathers during decode for transient
 memory and is not the CC1 speed profile measured above.
@@ -214,8 +219,9 @@ tail. It is retained for reproduction, not recommended as the accuracy default.
 
 ## Loader and attention backends
 
-- Weight loading is `--load-format instanttensor`; the full target tensor load is
-  roughly three minutes on this host, not the 16-minute safetensors path.
+- Weight loading is `--load-format instanttensor`; the r3 clean-image tensor pass
+  took 162 seconds and complete per-rank model loading took about 193.5 seconds,
+  not the 16-minute safetensors path.
 - Dense MLA decode uses SparkInfer B12X and the fused Kimi K3 cache/KDA ops.
 - KDA prefill remains Triton. The archived FlashKDA SM120 work reduced persistent
   module memory to about 0.119 GiB/rank, but was 0.37% slower than Triton in the
@@ -249,3 +255,10 @@ These earlier immutable images remain available independently of PR #238/#118:
   `voipmonitor/vllm:kimi-k3-hh-dspark-dcp16-pr238-pr118-20260804@sha256:a13b98f7c420c32c776872896a30c53867aa9dbab1b895c03d5ff15984179722`.
 - Previous unified PR #238/#118 runtime before the DCP8 TP-projection fix:
   `voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:e029cab81df9ef35cf55bf3caed6e62acaeabe87ad72a62722d10b5e07d3e66d`.
+
+Do not use the r2 packaging attempt at
+`sha256:5b52837eac512b0500e547bd5e99940e1243678eca1c7f59e6261ba4a5a4c923`.
+It inherited an old seven-argument `_moe_C::topk_sigmoid` binary and failed
+after weight loading. The r3 build pins the compatible native base and checks
+for the required `is_padding` argument during the image build; the completed
+image also passed all 19 focused projection and graph-lifecycle tests.

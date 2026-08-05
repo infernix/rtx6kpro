@@ -12,8 +12,11 @@
     "sparkinfer_pr": 118,
     "sparkinfer_commit": "34bb490b28fd0742006a611c83c6b9883ed3d453",
     "measured_sparkinfer_commit": "34bb490b28fd0742006a611c83c6b9883ed3d453",
-    "docker_recipe_commit": "1bbe5125b509bc159717f1ae7a615de8322997e3",
-    "docker_image": "voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r2-20260805@sha256:5b52837eac512b0500e547bd5e99940e1243678eca1c7f59e6261ba4a5a4c923"
+    "docker_image_build_commit": "af5e90ef5cbc12e88dba67230d6cc3a85c6f31f9",
+    "docker_validated_runner_commit": "8e0ec81a2500c947ce278ff2b0f048d4b26e897d",
+    "docker_image": "voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r3-20260805@sha256:b9c780a20346caf05c1ad449e5ff319c432e117532cb0bef356aede20222b803",
+    "native_abi_base_digest": "sha256:3ce9dfad1f684a76687095d80e49c96de42b008f7141587e7620c068f8073155",
+    "rejected_r2_digest": "sha256:5b52837eac512b0500e547bd5e99940e1243678eca1c7f59e6261ba4a5a4c923"
   },
   "decode_method": {
     "request": "one 136-token coding prompt, temperature=0, ignore_eos=true",
@@ -27,20 +30,26 @@
       "physical_kv_tokens": 1054602,
       "max_num_batched_tokens": 256,
       "decode_cc1_tokens_per_second": [
+        45.72510729620933,
+        45.23438417041146,
+        45.43784022547775
+      ],
+      "decode_cc1_median_tokens_per_second": 45.43784022547775,
+      "decode_cc1_mean_tokens_per_second": 45.46577723069951,
+      "source_overlay_decode_cc1_tokens_per_second": [
         45.789362511129546,
         45.660049656910445,
         45.01907476279898
       ],
-      "decode_cc1_median_tokens_per_second": 45.660049656910445,
-      "decode_cc1_mean_tokens_per_second": 45.489495643613,
-      "canonical_256_prompt_1024_decode_tokens_per_second": [
+      "source_overlay_decode_cc1_median_tokens_per_second": 45.660049656910445,
+      "source_overlay_canonical_256_prompt_1024_decode_tokens_per_second": [
         44.42249272927992,
         45.23401775378305,
         45.1841564416562
       ],
-      "canonical_median_tokens_per_second": 45.1841564416562,
-      "instanttensor_tensor_load_seconds": 166.99,
-      "model_load_seconds": 189.271564,
+      "source_overlay_canonical_median_tokens_per_second": 45.1841564416562,
+      "instanttensor_tensor_load_seconds": 162,
+      "model_load_seconds": 193.527367,
       "model_memory_gib_per_rank": 90.96,
       "kv_bytes_per_rank": 1860000000,
       "pre_fix_decode_cc1_median_tokens_per_second": 38.053875133428434,
