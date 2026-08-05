@@ -5,12 +5,12 @@
 Use one immutable Kimi K3 image for all validated HH profiles:
 
 ```text
-voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:2407e74fba03d5074acc3d2a7b1a1340bb21905fcacc560186bb3322c4e8f125
+voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:e029cab81df9ef35cf55bf3caed6e62acaeabe87ad72a62722d10b5e07d3e66d
 ```
 
 The image pins vLLM PR #238 at
 `b7e203d0bb6e1456b858277a388726f93f0d1ff6` and SparkInfer PR #118 at
-`024a7607ee7e025921b02e140f83f01687165bcf`.
+`34bb490b28fd0742006a611c83c6b9883ed3d453`.
 
 Profile selection:
 
@@ -32,8 +32,8 @@ do not add weight quantization.
 | Component | Reference |
 |---|---|
 | vLLM | [PR #238](https://github.com/local-inference-lab/vllm/pull/238), commit `b7e203d0bb6e1456b858277a388726f93f0d1ff6` |
-| SparkInfer | [PR #118](https://github.com/local-inference-lab/sparkinfer/pull/118), commit `024a7607ee7e025921b02e140f83f01687165bcf` |
-| Docker recipe | [build/kimi-k3-hh-runtime-20260805](https://github.com/local-inference-lab/blackwell-llm-docker/tree/build/kimi-k3-hh-runtime-20260805), commit `e1755c5f7ec062b83ffd895217fc07dd58fbabf1` |
+| SparkInfer | [PR #118](https://github.com/local-inference-lab/sparkinfer/pull/118), commit `34bb490b28fd0742006a611c83c6b9883ed3d453` |
+| Docker recipe | [build/kimi-k3-hh-runtime-20260805](https://github.com/local-inference-lab/blackwell-llm-docker/tree/build/kimi-k3-hh-runtime-20260805), image-build commit `45b6e336090347d78d67d879830bbb894132644f` |
 | Target checkpoint | `moonshotai/Kimi-K3@2496450e92e425c886db095102a52a6682ca3970` |
 | Draft checkpoint | `Inferact/Kimi-K3-DSpark@cf6b8244620e7ea4b0651d214f28e89eac75bed6` |
 
@@ -74,7 +74,7 @@ HF_CACHE=/models/hf PORT=8001 NAME=kimi-k3-dcp8 \
 Equivalent direct launch for DCP8 target-only:
 
 ```bash
-KIMI_IMAGE='voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:2407e74fba03d5074acc3d2a7b1a1340bb21905fcacc560186bb3322c4e8f125'
+KIMI_IMAGE='voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:e029cab81df9ef35cf55bf3caed6e62acaeabe87ad72a62722d10b5e07d3e66d'
 
 docker run --rm \
   --name kimi-k3-hh-dcp8-no-dspark \
@@ -174,6 +174,11 @@ The requested clock-profile result is below the older 41.167 tok/s HH/DCP8
 clocked gate, so the DCP16-oriented communication changes are not a DCP8 speedup.
 The current dynamic-clock coding-prompt median remains in the older unlocked
 DCP8 band. Graphics and memory clock locks were reset after the measurement.
+The full-model measurements were collected at SparkInfer `024a760`; final PR
+head `34bb490` adds review-driven int64 offset, pointer-alignment, cleanup, and
+benchmark-oracle hardening. The K3 aligned execution geometry is unchanged;
+all affected CUDA modules compile at the final head and the published image
+pins that final head.
 For larger prefill chunks, set `KIMI_SHARD_F_A=1` and increase
 `MAX_NUM_BATCHED_TOKENS`; that trades extra gathers during decode for transient
 memory and is not the CC1 speed profile measured above.

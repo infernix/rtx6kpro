@@ -10,9 +10,10 @@
     "vllm_pr": 238,
     "vllm_commit": "b7e203d0bb6e1456b858277a388726f93f0d1ff6",
     "sparkinfer_pr": 118,
-    "sparkinfer_commit": "024a7607ee7e025921b02e140f83f01687165bcf",
-    "docker_recipe_commit": "e1755c5f7ec062b83ffd895217fc07dd58fbabf1",
-    "docker_image": "voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:2407e74fba03d5074acc3d2a7b1a1340bb21905fcacc560186bb3322c4e8f125"
+    "sparkinfer_commit": "34bb490b28fd0742006a611c83c6b9883ed3d453",
+    "measured_sparkinfer_commit": "024a7607ee7e025921b02e140f83f01687165bcf",
+    "docker_recipe_commit": "45b6e336090347d78d67d879830bbb894132644f",
+    "docker_image": "voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-20260805@sha256:e029cab81df9ef35cf55bf3caed6e62acaeabe87ad72a62722d10b5e07d3e66d"
   },
   "decode_method": {
     "request": "one 136-token coding prompt, temperature=0, ignore_eos=true",
