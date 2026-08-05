@@ -162,6 +162,7 @@ Validated 2026-08-05:
 | Model limit | 1,048,576 tokens |
 | CC1 decode runs | 36.749 / 38.054 / 38.354 tok/s |
 | CC1 median / mean | 38.054 / 37.719 tok/s |
+| Canonical 256-input/1024-output gate with requested 3000-3090 MHz profile | 37.116 / 37.844 / 37.898 tok/s; 37.844 median |
 | InstantTensor model load | 191.55 s |
 | Loaded model memory | 90.96 GiB/rank |
 | Final free VRAM | about 138 MiB/rank |
@@ -169,6 +170,10 @@ Validated 2026-08-05:
 The original scheduler/workspace settings missed startup by about 21 MiB/rank
 during Triton autotuning. Reducing only the transient scheduler/workspace budget
 allowed the same physical 1M cache and unmodified target checkpoint to start.
+The requested clock-profile result is below the older 41.167 tok/s HH/DCP8
+clocked gate, so the DCP16-oriented communication changes are not a DCP8 speedup.
+The current dynamic-clock coding-prompt median remains in the older unlocked
+DCP8 band. Graphics and memory clock locks were reset after the measurement.
 For larger prefill chunks, set `KIMI_SHARD_F_A=1` and increase
 `MAX_NUM_BATCHED_TOKENS`; that trades extra gathers during decode for transient
 memory and is not the CC1 speed profile measured above.

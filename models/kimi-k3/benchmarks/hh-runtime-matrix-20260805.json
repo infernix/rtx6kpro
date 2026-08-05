@@ -32,6 +32,12 @@
       ],
       "decode_cc1_median_tokens_per_second": 38.053875133428434,
       "decode_cc1_mean_tokens_per_second": 37.719034996149105,
+      "canonical_256_prompt_1024_decode_requested_clock_profile_tokens_per_second": [
+        37.11550399749749,
+        37.84387624445027,
+        37.89829366072439
+      ],
+      "canonical_requested_clock_profile_median_tokens_per_second": 37.84387624445027,
       "model_load_seconds": 191.550139,
       "model_memory_gib_per_rank": 90.96,
       "kv_bytes_per_rank": 1860000000
