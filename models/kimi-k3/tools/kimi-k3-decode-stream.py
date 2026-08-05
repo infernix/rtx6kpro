@@ -17,6 +17,14 @@ def main() -> None:
     parser.add_argument("--token-file", type=Path, required=True)
     parser.add_argument("--prompt-tokens", type=int, default=256)
     parser.add_argument("--max-tokens", type=int, default=1024)
+    parser.add_argument(
+        "--allowed-token-id",
+        type=int,
+        help=(
+            "restrict every decode step to one token ID for a stable "
+            "hidden-state/routing A/B control"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--metrics", type=Path, required=True)
     args = parser.parse_args()
@@ -27,21 +35,22 @@ def main() -> None:
         isinstance(token, int) for token in prompt
     ):
         raise ValueError("token file lacks the requested integer token prefix")
-    payload = json.dumps(
-        {
-            "model": args.model,
-            "prompt": prompt,
-            "max_tokens": args.max_tokens,
-            "temperature": 0,
-            "seed": 1,
-            "ignore_eos": True,
-            "stream": True,
-            "stream_options": {"include_usage": True},
-        }
-    ).encode()
+    payload = {
+        "model": args.model,
+        "prompt": prompt,
+        "max_tokens": args.max_tokens,
+        "temperature": 0,
+        "seed": 1,
+        "ignore_eos": True,
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
+    if args.allowed_token_id is not None:
+        payload["allowed_token_ids"] = [args.allowed_token_id]
+    encoded_payload = json.dumps(payload).encode()
     request = urllib.request.Request(
         f"{args.url}/v1/completions",
-        data=payload,
+        data=encoded_payload,
         headers={"Content-Type": "application/json"},
     )
 
@@ -76,6 +85,7 @@ def main() -> None:
         "formula": "(completion_tokens - 1) / (last_token_time - first_token_time)",
         "prompt_tokens": int(usage.get("prompt_tokens", len(prompt))),
         "completion_tokens": completion_tokens,
+        "allowed_token_id": args.allowed_token_id,
         "timed_events": len(token_times),
         "ttft_seconds": token_times[0] - started,
         "decode_seconds": decode_seconds,
