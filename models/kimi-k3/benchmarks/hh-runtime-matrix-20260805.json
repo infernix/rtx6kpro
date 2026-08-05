@@ -8,19 +8,20 @@
   },
   "sources": {
     "vllm_pr": 238,
-    "vllm_commit": "91a81414c72d0633e5d7292702c1f4611d5b7e4d",
+    "vllm_commit": "3846d740fcfe566e821c574892574f7797b85008",
     "sparkinfer_pr": 118,
-    "sparkinfer_commit": "34bb490b28fd0742006a611c83c6b9883ed3d453",
-    "measured_sparkinfer_commit": "34bb490b28fd0742006a611c83c6b9883ed3d453",
-    "docker_image_build_commit": "af5e90ef5cbc12e88dba67230d6cc3a85c6f31f9",
-    "docker_validated_runner_commit": "8e0ec81a2500c947ce278ff2b0f048d4b26e897d",
-    "docker_image": "voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r3-20260805@sha256:b9c780a20346caf05c1ad449e5ff319c432e117532cb0bef356aede20222b803",
+    "sparkinfer_commit": "5a46e5b5a8a87012a5b8261b81130ee057591d5d",
+    "measured_sparkinfer_commit": "5a46e5b5a8a87012a5b8261b81130ee057591d5d",
+    "docker_image_build_commit": "c95180778127cbcb1c4c15fb3ffd52593bf67d42",
+    "docker_image": "voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r5-20260805@sha256:d5b7e0160ebdb8202237d378bfddd2343fcb4dbd3b537e026f55bec122bf2181",
     "native_abi_base_digest": "sha256:3ce9dfad1f684a76687095d80e49c96de42b008f7141587e7620c068f8073155",
     "rejected_r2_digest": "sha256:5b52837eac512b0500e547bd5e99940e1243678eca1c7f59e6261ba4a5a4c923"
   },
   "decode_method": {
-    "request": "one 136-token coding prompt, temperature=0, ignore_eos=true",
-    "completion_tokens": 512,
+    "request": "fixed 256-token prompt, temperature=0, ignore_eos=true, allowed token ID 13",
+    "warmup_completion_tokens": 512,
+    "completion_tokens": 1024,
+    "measured_runs_per_profile": 6,
     "formula": "(completion_tokens - 1) / (last_token_time - first_token_time)"
   },
   "profiles": {
@@ -29,13 +30,27 @@
       "max_model_len": 1048576,
       "physical_kv_tokens": 1054602,
       "max_num_batched_tokens": 256,
+      "decode_cc1_scope": "matched source-byte candidate A/B",
       "decode_cc1_tokens_per_second": [
-        45.72510729620933,
-        45.23438417041146,
-        45.43784022547775
+        51.2645953409406,
+        51.28857086798857,
+        52.43851067832289,
+        52.82626441708249,
+        52.78211337202175,
+        52.93914283875418
       ],
-      "decode_cc1_median_tokens_per_second": 45.43784022547775,
-      "decode_cc1_mean_tokens_per_second": 45.46577723069951,
+      "decode_cc1_median_tokens_per_second": 52.61031202517232,
+      "decode_cc1_last_three_median_tokens_per_second": 52.82626441708249,
+      "decode_cc1_mean_tokens_per_second": 52.25653291918508,
+      "clean_image_stable_decode_cc1_tokens_per_second": [
+        52.13859374496952,
+        52.51230927107405,
+        52.655044123590045,
+        52.490564836477375,
+        52.225695242899064,
+        51.80828073188508
+      ],
+      "clean_image_stable_decode_cc1_median_tokens_per_second": 52.35813003968822,
       "source_overlay_decode_cc1_tokens_per_second": [
         45.789362511129546,
         45.660049656910445,
@@ -48,8 +63,8 @@
         45.1841564416562
       ],
       "source_overlay_canonical_median_tokens_per_second": 45.1841564416562,
-      "instanttensor_tensor_load_seconds": 162,
-      "model_load_seconds": 193.527367,
+      "instanttensor_tensor_load_seconds": 157,
+      "model_load_seconds": 185.89022,
       "model_memory_gib_per_rank": 90.96,
       "kv_bytes_per_rank": 1860000000,
       "pre_fix_decode_cc1_median_tokens_per_second": 38.053875133428434,
@@ -60,7 +75,16 @@
       "max_model_len": 1048576,
       "physical_kv_tokens": 1460937,
       "max_num_batched_tokens": 2048,
-      "decode_cc1_tokens_per_second": 47.117707,
+      "decode_cc1_tokens_per_second": [
+        51.79751686880245,
+        51.90220305849866,
+        52.12017534990214,
+        51.98519619455265,
+        51.93212344636877,
+        52.03255817562655
+      ],
+      "decode_cc1_median_tokens_per_second": 51.95865982046071,
+      "decode_cc1_last_three_median_tokens_per_second": 51.98519619455265,
       "decode_cc8_aggregate_tokens_per_second": 204.559323,
       "decode_cc8_per_request_median_tokens_per_second": 26.0351
     },
@@ -88,5 +112,19 @@
       "decode_cc1_median_tokens_per_second": 99.65,
       "status": "validated but not recommended because it modifies more target weights and has less prefill headroom"
     }
+  },
+  "collective_microbenchmark": {
+    "method": "SparkInfer CUDA-graph replay, batch 1, BF16, query head dim 576, output head dim 512, production 256-thread launch",
+    "dcp8_total_heads": 48,
+    "dcp8_reduce_microseconds": 14.337,
+    "dcp8_gather_microseconds": 13.303,
+    "dcp8_pair_microseconds": 25.631,
+    "dcp16_total_heads": 96,
+    "dcp16_reduce_microseconds": 25.170,
+    "dcp16_gather_microseconds": 33.528,
+    "dcp16_pair_microseconds": 57.176,
+    "dcp8_pair_advantage_milliseconds_per_24_layers": 0.75708,
+    "dcp8_512_thread_pair_microseconds": 24.989,
+    "dcp8_512_thread_gain_milliseconds_per_24_layers": 0.015408
   }
 }

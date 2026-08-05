@@ -5,20 +5,20 @@
 Use one immutable Kimi K3 image for all validated HH profiles:
 
 ```text
-voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r3-20260805@sha256:b9c780a20346caf05c1ad449e5ff319c432e117532cb0bef356aede20222b803
+voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r5-20260805@sha256:d5b7e0160ebdb8202237d378bfddd2343fcb4dbd3b537e026f55bec122bf2181
 ```
 
 The image pins vLLM PR #238 at
-`91a81414c72d0633e5d7292702c1f4611d5b7e4d` and SparkInfer PR #118 at
-`34bb490b28fd0742006a611c83c6b9883ed3d453`.
+`3846d740fcfe566e821c574892574f7797b85008` and SparkInfer PR #118 at
+`5a46e5b5a8a87012a5b8261b81130ee057591d5d`.
 
 Profile selection:
 
 | Requirement | Profile | Measured result |
 |---|---|---:|
 | Highest validated CC1 throughput | `dcp16-dspark` | about 106-115 tok/s at short context |
-| Exact target checkpoint, no speculative decoding | `dcp16-no-dspark` | 47.118 tok/s CC1; 204.559 tok/s aggregate CC8 |
-| Exact target checkpoint with DCP8 | `dcp8-no-dspark` | 45.438 tok/s clean-image CC1 median |
+| Exact target checkpoint, fastest non-speculative CC1 | `dcp8-no-dspark` | 52.826 tok/s matched A/B; 52.358 tok/s immutable-image stable median; physical 1M KV |
+| Exact target checkpoint with extra KV capacity | `dcp16-no-dspark` | 51.985 tok/s stable CC1 median; 1,460,937 physical KV tokens |
 | Exact target weights plus BF16 DSpark | `dcp16-dspark-full` | functional reference profile; smaller scheduler budget |
 | Historical DCP8 speculative profile | `dcp8-dspark` | 99.65 tok/s CC1, but target shared experts are MXFP8 |
 
@@ -31,9 +31,9 @@ do not add weight quantization.
 
 | Component | Reference |
 |---|---|
-| vLLM | [PR #238](https://github.com/local-inference-lab/vllm/pull/238), commit `91a81414c72d0633e5d7292702c1f4611d5b7e4d` |
-| SparkInfer | [PR #118](https://github.com/local-inference-lab/sparkinfer/pull/118), commit `34bb490b28fd0742006a611c83c6b9883ed3d453` |
-| Docker recipe | [build/kimi-k3-hh-runtime-20260805](https://github.com/local-inference-lab/blackwell-llm-docker/tree/build/kimi-k3-hh-runtime-20260805), image-build commit `af5e90ef5cbc12e88dba67230d6cc3a85c6f31f9`, validated-runner/docs commit `8e0ec81a2500c947ce278ff2b0f048d4b26e897d` |
+| vLLM | [PR #238](https://github.com/local-inference-lab/vllm/pull/238), commit `3846d740fcfe566e821c574892574f7797b85008` |
+| SparkInfer | [PR #118](https://github.com/local-inference-lab/sparkinfer/pull/118), commit `5a46e5b5a8a87012a5b8261b81130ee057591d5d` |
+| Docker recipe | [build/kimi-k3-hh-runtime-20260805](https://github.com/local-inference-lab/blackwell-llm-docker/tree/build/kimi-k3-hh-runtime-20260805), image-build commit `c95180778127cbcb1c4c15fb3ffd52593bf67d42` |
 | Target checkpoint | `moonshotai/Kimi-K3@2496450e92e425c886db095102a52a6682ca3970` |
 | Draft checkpoint | `Inferact/Kimi-K3-DSpark@cf6b8244620e7ea4b0651d214f28e89eac75bed6` |
 
@@ -74,7 +74,7 @@ HF_CACHE=/models/hf PORT=8001 NAME=kimi-k3-dcp8 \
 Equivalent direct launch for DCP8 target-only:
 
 ```bash
-KIMI_IMAGE='voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r3-20260805@sha256:b9c780a20346caf05c1ad449e5ff319c432e117532cb0bef356aede20222b803'
+KIMI_IMAGE='voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r5-20260805@sha256:d5b7e0160ebdb8202237d378bfddd2343fcb4dbd3b537e026f55bec122bf2181'
 
 docker run --rm \
   --name kimi-k3-hh-dcp8-no-dspark \
@@ -136,9 +136,10 @@ transport, precomputed top-k routing, deferred hierarchical collective
 consumption, BF16x2 transport, persistent small-M MoE barriers, and the fast DCP
 A2A dispatch from PRs #238/#118.
 
-Measured with 512 forced decode tokens after warmup:
+Measured with a fixed 256-token prompt and six 1,024-token forced decode runs:
 
-- CC1: 47.117707 tok/s.
+- CC1 runs: 51.798, 51.902, 52.120, 51.985, 51.932, 52.033 tok/s.
+- All-run median: 51.959 tok/s; last-three median: 51.985 tok/s.
 - CC8: 204.559323 tok/s aggregate decode; 26.0351 tok/s median per request.
 - Physical FP8 target KV: 1,460,937 tokens for a 1,048,576-token model limit.
 - Scheduler: 2048 tokens.
@@ -154,48 +155,40 @@ default because that is faster at CC1. The resulting memory headroom is very
 tight, so the validated launcher uses a 256-token scheduler budget and a
 2048-row Triton MLA prefill workspace.
 
-Validated 2026-08-05:
+Validated r5 result. The first six-run row is the matched source-byte A/B; the
+same bytes are baked into the immutable r5 image.
 
 | Item | Result |
 |---|---:|
 | Physical FP8 KV | 1,054,602 tokens |
 | Model limit | 1,048,576 tokens |
-| Clean-image CC1 decode runs | 45.725 / 45.234 / 45.438 tok/s |
-| Clean-image CC1 median / mean | 45.438 / 45.466 tok/s |
-| Source-overlay CC1 reference | 45.789 / 45.660 / 45.019 tok/s; 45.660 median |
-| Source-overlay canonical 256-input/1024-output gate | 44.422 / 45.234 / 45.184 tok/s; 45.184 median |
-| Clean-image InstantTensor tensor load / complete per-rank model load | 162 / about 193.5 s |
+| CC1 runs | 51.265 / 51.289 / 52.439 / 52.826 / 52.782 / 52.939 tok/s |
+| All-run / last-three median | 52.610 / 52.826 tok/s |
+| Immutable-image stable six-run median / range | 52.358 / 51.808-52.655 tok/s |
+| Immutable-image InstantTensor / complete per-rank model load | 157 / 185.9 s |
 | Loaded model memory | 90.96 GiB/rank |
-| Final free VRAM | about 122-142 MiB/rank |
 
-The original scheduler/workspace settings missed startup by about 21 MiB/rank
-during Triton autotuning. Reducing only the transient scheduler/workspace budget
-allowed the same physical 1M cache and unmodified target checkpoint to start.
+The r4 profiler isolated the former inversion. DCP8's shorter gather exposed
+eager host work between query gather and dense-MLA launch: 39.7 us/layer across
+ranks versus 23.1 us/layer for DCP16, about 0.40 ms/token. SparkInfer
+`dense_mla.bind` measured 28.47 us/call, or 0.683 ms across the 24 full-attention
+layers. vLLM commit `e5865bdc3f` gives the DCP gather and dense-MLA output stable
+addresses and reuses the validated binding. A pointer, layout, scale, or active
+split change forces a rebuild.
 
-The first PR #238 DCP8 measurement was only 38.054 tok/s because the Kimi
-projection fast path incorrectly used the DCP coordinator and required its
-world size to equal TP. DCP16/TP16 satisfied that condition; DCP8/TP16 silently
-fell back to generic NCCL gathers plus separate native top-k in every MoE layer.
-Commit `91a81414c` keeps MLA communication on DCP8 but routes sharded projection
-gathers over the full TP16 group. CUDA-graph checkpoint/capture now tracks both
-independent SparkInfer pools. This is a byte-preserving BF16/FP32 copy
-collective, not an arithmetic or precision change. The coding-prompt median
-improved from 38.054 to 45.660 tok/s (+19.99%); the exact canonical gate improved
-from 37.844 to 45.184 tok/s (+19.40%). The subsequently published clean image
-reproduced the coding test at a 45.438 tok/s median, 0.49% below that source-overlay
-reference.
+Against the equivalently patched DCP16 result, DCP8 is 1.62% faster on the
+stable last-three median. Against DCP8 r4 it is 9.23% faster. This changes no
+weights, KV format, arithmetic, or reduction order. Tests: B12X MLA 48/48 and
+DCP A2A 48/48.
 
-The DCP8 source-overlay result trails the 47.118 tok/s DCP16 short-context
-result by 3.1%; the clean-image median trails it by 3.6%. DCP8 halves the MLA
-collective payload, but it doubles local KV length per DCP rank:
-`48 heads * (L/8) == 96 heads * (L/16)`. It therefore does not halve attention
-arithmetic, and the smaller attention geometry plus fixed launch and barrier
-costs can remain slightly less efficient at short context.
+The isolated production-geometry SparkInfer graph benchmark confirms the
+underlying DCP8 advantage. With the 256-thread production launch, batch 1,
+BF16 query width 576 and output width 512, gather+reduce took 25.631 us/layer
+for DCP8 and 57.176 us/layer for DCP16. The difference is 0.757 ms/token over
+24 full-attention layers. A 512-thread DCP8 launch reduced the pair to 24.989
+us/layer, only 0.015 ms/token across the complete model, so it is recorded but
+not enabled by default.
 
-The full-model measurement uses final SparkInfer PR head `34bb490` and vLLM PR
-head `91a81414c`. The published r3 image pins both exact commits. It was started
-without source bind mounts and exposed the expected DCP8 attention pool plus
-independent TP16 projection pools for query widths 672 and 136.
 For larger prefill chunks, set `KIMI_SHARD_F_A=1` and increase
 `MAX_NUM_BATCHED_TOKENS`; that trades extra gathers during decode for transient
 memory and is not the CC1 speed profile measured above.
@@ -220,8 +213,8 @@ tail. It is retained for reproduction, not recommended as the accuracy default.
 
 ## Loader and attention backends
 
-- Weight loading is `--load-format instanttensor`; the r3 clean-image tensor pass
-  took 162 seconds and complete per-rank model loading took about 193.5 seconds,
+- Weight loading is `--load-format instanttensor`; the r5 clean-image tensor pass
+  took 157 seconds and complete per-rank model loading took about 185.9 seconds,
   not the 16-minute safetensors path.
 - Dense MLA decode uses SparkInfer B12X and the fused Kimi K3 cache/KDA ops.
 - KDA prefill remains Triton. The archived FlashKDA SM120 work reduced persistent
@@ -231,9 +224,10 @@ tail. It is retained for reproduction, not recommended as the accuracy default.
 
 ## Decode benchmark method
 
-The CC1 numbers use one 136-token coding prompt, `temperature=0`,
-`ignore_eos=true`, a 128-token warmup, and a 512-token measured completion. The
-reported decode rate excludes prefill and the first generated token:
+The matched r5 DCP8/DCP16 CC1 numbers use the same fixed 256-token prompt,
+`temperature=0`, `ignore_eos=true`, token ID 13 as the only allowed output, a
+512-token warmup, and six 1,024-token measured completions. The reported decode
+rate excludes prefill and the first generated token:
 
 ```text
 (completion_tokens - 1) / (last_token_time - first_token_time)
@@ -247,6 +241,9 @@ hidden-state/routing A/B control.
 ## Rollback images
 
 These earlier immutable images remain available independently of PR #238/#118:
+
+- Previous r4 adaptive-split runtime:
+  `voipmonitor/vllm:kimi-k3-hh-runtime-pr238-pr118-r4-20260805@sha256:7e205e5c7c54cb750a480169ee346787e5b09d23351be6e90754ed9440645150`.
 
 - Stable pre-HH full-MXFP4 DCP8:
   `voipmonitor/vllm:kimi-k3-full-mxfp4-dcp8-it-stable-20260803@sha256:2c99435142dd10f85834eaf4c490cb3d4095318152f0cc4fb38c7623d7edb7ac`.
