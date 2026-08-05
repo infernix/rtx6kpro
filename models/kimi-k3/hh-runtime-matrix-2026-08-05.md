@@ -185,11 +185,12 @@ from 37.844 to 45.184 tok/s (+19.40%). The subsequently published clean image
 reproduced the coding test at a 45.438 tok/s median, 0.49% below that source-overlay
 reference.
 
-DCP8 still trails the 47.118 tok/s DCP16 short-context result by about 3.1%.
-DCP8 halves the MLA collective payload, but it doubles local KV length per DCP
-rank: `48 heads * (L/8) == 96 heads * (L/16)`. It therefore does not halve
-attention arithmetic, and the smaller attention geometry plus fixed launch and
-barrier costs can remain slightly less efficient at short context.
+The DCP8 source-overlay result trails the 47.118 tok/s DCP16 short-context
+result by 3.1%; the clean-image median trails it by 3.6%. DCP8 halves the MLA
+collective payload, but it doubles local KV length per DCP rank:
+`48 heads * (L/8) == 96 heads * (L/16)`. It therefore does not halve attention
+arithmetic, and the smaller attention geometry plus fixed launch and barrier
+costs can remain slightly less efficient at short context.
 
 The full-model measurement uses final SparkInfer PR head `34bb490` and vLLM PR
 head `91a81414c`. The published r3 image pins both exact commits. It was started
