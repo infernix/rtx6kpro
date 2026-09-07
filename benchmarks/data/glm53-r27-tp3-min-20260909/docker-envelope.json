@@ -1,7 +1,8 @@
 {
   "date": "2026-09-07",
   "evidence_basis": [
-    "r1 hashes were measured inside the pulled digest sha256:1fc8f68b2f705d82fe8319901f1ab25fb9162bb9ac6ae50320b808c81e28042e (docker run sha256sum on the five packaged files); r2 hashes recorded from the r2 manifest/config labels."
+    "r1 hashes were measured inside the pulled digest sha256:1fc8f68b2f705d82fe8319901f1ab25fb9162bb9ac6ae50320b808c81e28042e (docker run sha256sum on the five packaged files); r2 hashes recorded from the r2 manifest/config labels.",
+    "r3 hashes were computed in-repo pre-build (tp3 launcher 59529a3994413bb1d8cd89d499e638de2562d563d7061382f7fce8c47679250d -> source.lock a46f44de8c7298b248a997dc59d49d389cc849a11621a1b67c618fbdbd12f7ee -> verifier b7192d68032cf29a9e16bddd846c5edcbf23a13d84b61d85492684bdb438b865), gated by the in-build sha256sum/bash -n/verifier verdicts, and re-read verbatim from the pushed config blob sha256:832bc3b2d660763c5551db1d9017d25ec6714769c9fb06f7831862eb84263d9a; the verifier hash is now its own label (local-inference.runtime.verifier.sha256)."
   ],
   "fixed_launcher_set": {
     "launcher.cache-mode.sha256": "f4ba51cf15bb362a321d22ddd08b5c27c71ef60fed8c428ea845f14d3dfb822d",
@@ -12,7 +13,8 @@
   },
   "gpu_validation": "skipped_by_plan_change",
   "notes": [
-    "The r1/r2 fingerprint label records the GENERIC namespace (...p2048-bt4096). TP3 launches resolve their own JIT directory (the tp3_launch_cache_namespace above) \u2014 a future rebuild must keep both names coherent (generic label = R27 TP4 contract; tp3 namespace = strict chain sha8192)."
+    "The r1/r2 fingerprint label records the GENERIC namespace (...p2048-bt4096). TP3 launches resolve their own JIT directory (the tp3_launch_cache_namespace above) \u2014 a future rebuild must keep both names coherent (generic label = R27 TP4 contract; tp3 namespace = strict chain sha8192).",
+    "r2 baked vllm b03357280b/b12x f52b0824 (one pre-final-port commit behind the branch heads); r3 anchors exactly the canonical heads \u2014 vllm e5b0fc0f4a (its branch is research/glm53-tp3-r27: the -min name still tips at the r2-era bake, so the r3 vllm.ref row and branch label moved with it) and b12x fdb5bc7b (on research/glm53-tp3-r27-min). Only the -r3 tag carries the final port heads."
   ],
   "r1": {
     "config_digest": "sha256:455e062062784e04fbb747f60ed277982a94212e5113591048525628b3aac36b",
@@ -72,17 +74,59 @@
     ],
     "tag": "infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364-r2"
   },
+  "r3": {
+    "build": {
+      "b12x_commit_arg": "fdb5bc7bc13da1ed46b373f536d803b6645a02df",
+      "b12x_tree_arg": "5a8d6547dcc29760716257a3de31e6cd98ea87fe",
+      "engine": "podman",
+      "generic_cache_fingerprint_arg": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096",
+      "host": "believewin",
+      "runtime_commit_arg": "a04ab2d3e6b8bf7db15a844186f69ef4e2e6164a",
+      "tag": "localhost/glm53-r27-tp3-min:r3",
+      "validation_runs": "none (Dockerfile RUN gates only: sha256sum -c, bash -n, packaged verifier policy-only + tree checks)",
+      "vllm_commit_arg": "e5b0fc0f4a56907d891a21e22cf6a44247f8babe",
+      "vllm_tree_arg": "3f70a7796f54bdf65024428113937d950a1be062"
+    },
+    "child_layers": [
+      "sha256:42fa788cf81964886c53610a428cc1ca94cc7fb8a24238934018339890828fec",
+      "sha256:032850a620526be74177118a4df3778ee77960af67ccfc82bcc00179610ba3b8",
+      "sha256:5c39bfeea3ba1ad2965049ba50191870e06ca60d58916ad906eb6172a1bf6aa4",
+      "sha256:8eb99751f16e49c805a48e1fe21e2b3cf93d8f4c8748b3acb91f115b7fa6fcfd"
+    ],
+    "config_digest": "sha256:832bc3b2d660763c5551db1d9017d25ec6714769c9fb06f7831862eb84263d9a",
+    "labels": {
+      "local-inference.cache.fingerprint": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096",
+      "local-inference.runtime.contract": "glm53-r27-tp3-min",
+      "local-inference.runtime.parent": "voipmonitor/vllm:jovian-judgement-community-20260906-r27@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+      "local-inference.runtime.source-lock.sha256": "a46f44de8c7298b248a997dc59d49d389cc849a11621a1b67c618fbdbd12f7ee",
+      "local-inference.runtime.source-overlay": "active",
+      "local-inference.runtime.tp3-launcher.sha256": "59529a3994413bb1d8cd89d499e638de2562d563d7061382f7fce8c47679250d",
+      "local-inference.runtime.verifier.sha256": "b7192d68032cf29a9e16bddd846c5edcbf23a13d84b61d85492684bdb438b865",
+      "org.opencontainers.image.revision": "a04ab2d3e6b8bf7db15a844186f69ef4e2e6164a"
+    },
+    "manifest_digest": "sha256:c54da924d0d819c14e9a74432a1fc15de91557d4bf0fba31ab0119be192d38b2",
+    "packaged_source_lock_sha256": "a46f44de8c7298b248a997dc59d49d389cc849a11621a1b67c618fbdbd12f7ee",
+    "packaged_tp3_launcher_sha256": "59529a3994413bb1d8cd89d499e638de2562d563d7061382f7fce8c47679250d",
+    "packaged_verifier_sha256": "b7192d68032cf29a9e16bddd846c5edcbf23a13d84b61d85492684bdb438b865",
+    "parent_collection": "voipmonitor/vllm@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+    "parent_descriptors": [
+      "sha256:ca6f6e4d8c66bb8b9ccc0f1d4e1f89c6cb0a7ee6d6c16c1bbbf3e09483298cf7",
+      "sha256:c1453edcf32708b0831df237a44a87a89cdbfe780741133f2e9422a28c09de0f"
+    ],
+    "tag": "infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364-r3"
+  },
   "reason": "r2 republish: CACHE_MODE=native launches in serve-glm53-flash-tp3-r27.sh previously fell through to the dense capture path; r2 wires the native DRAM-offload routing (LMCACHE_ENABLED=0, fail-closed numeric/positive NATIVE_KV_OFFLOADING_SIZE_GB, exec capture_launcher with --kv-offloading-backend native --kv-offloading-size --enable-cumem-allocator plus the strict TP3 tail flags) and re-anchors the revision label from 872bf6d... to the new branch head 2f75b3ff...",
   "receipt": "docker-envelope",
   "runtime_branch": "research/glm53-r27-tp3-min-overlay",
   "runtime_repository": "https://github.com/infernix/blackwell-llm-docker",
-  "tag_insertion": "glm53-r27-tp3-min-recipe01c67936a364-r2 only; preflight 404 verified; r1 manifest digest re-checked byte-identical after push",
+  "tag_insertion": "glm53-r27-tp3-min-recipe01c67936a364-r3 only; preflight 404 verified; r1 and r2 manifest digests re-checked byte-identical after push",
   "tags_untouched": [
     "glm53-r17-dual-tp-qualified-vllm87945c472d37-b12x4b604b9a326b-recipe1e876a6864dd",
     "glm53-r21-tp3-lmcache-recipe01c67936a364",
     "glm53-r21-tp3-lmcache-recipe01c67936a364-r2",
     "glm53-r21-tp3-qualified-vllme96b18dbb8c1-b12x6d47b10eddf4-recipe01c67936a364",
-    "glm53-r27-tp3-min-recipe01c67936a364"
+    "glm53-r27-tp3-min-recipe01c67936a364",
+    "glm53-r27-tp3-min-recipe01c67936a364-r2"
   ],
-  "tp3_launch_cache_namespace": "cu133-torch213-glm53-r27-tp3-vllmb033572b-b12xf52b0824-dense-ctx1m-seq8-bt8192"
+  "tp3_launch_cache_namespace": "cu133-torch213-glm53-r27-tp3-vllme5b0fc0f-b12xfdb5bc7b-dense-ctx1m-seq8-bt8192"
 }
