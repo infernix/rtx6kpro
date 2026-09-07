@@ -1,0 +1,81 @@
+{
+  "receipt": "docker-envelope",
+  "date": "2026-09-07",
+  "runtime_repository": "https://github.com/infernix/blackwell-llm-docker",
+  "runtime_branch": "research/glm53-r27-tp3-min-overlay",
+  "r1": {
+    "tag": "infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364",
+    "manifest_digest": "sha256:1fc8f68b2f705d82fe8319901f1ab25fb9162bb9ac6ae50320b808c81e28042e",
+    "config_digest": "sha256:455e062062784e04fbb747f60ed277982a94212e5113591048525628b3aac36b",
+    "labels": {
+      "org.opencontainers.image.revision": "872bf6d20ec0726d4fcb5d876d1eacc5e37d1c6d",
+      "local-inference.runtime.tp3-launcher.sha256": "b45f0250f25f3e2c33834c492f7b474e9c33b046a7ec806496e7c93a62df30fe",
+      "local-inference.runtime.source-lock.sha256": "f84877d2ba4e0d46283ddd04c7abd36c9a077943cbaddbc06ac2ccdf6ab29632",
+      "local-inference.runtime.contract": "glm53-r27-tp3-min",
+      "local-inference.runtime.source-overlay": "active",
+      "local-inference.runtime.parent": "voipmonitor/vllm:jovian-judgement-community-20260906-r27@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+      "local-inference.cache.fingerprint": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096"
+    },
+    "packaged_source_lock_sha256": "f84877d2ba4e0d46283ddd04c7abd36c9a077943cbaddbc06ac2ccdf6ab29632",
+    "packaged_tp3_launcher_sha256": "b45f0250f25f3e2c33834c492f7b474e9c33b046a7ec806496e7c93a62df30fe",
+    "packaged_verifier_sha256": "c4cf7b1004f06f47a0ff3bde17955b3a83c1e2f06e9acdf9d2524b9bf05e36ec",
+    "errata": "org.opencontainers.image.revision anchors 872bf6d... while the packaged content carries the 263320b-era verifier (identical content across both anchors); the revision label lags the branch head."
+  },
+  "r2": {
+    "tag": "infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364-r2",
+    "manifest_digest": "sha256:52e3a322498c96060817e06dd709607d2aa4ce99f4b6bda44c7fb1c7c6dd6cfe",
+    "config_digest": "sha256:f9e272b1e128e39ff12a769f33298fbc8640802984957ad253e9dca12a780379",
+    "labels": {
+      "org.opencontainers.image.revision": "2f75b3ffed662741baa26723795afaa5d4cadb20",
+      "local-inference.runtime.tp3-launcher.sha256": "f401b26b4594e5a3082c5f8c06b4926e80b609dc0d401c7a6e4fc3d264da628e",
+      "local-inference.runtime.source-lock.sha256": "d7c3889f17b75ed4ca8f296998aec05d08b2f350d72f4580f344f32da73517d9",
+      "local-inference.runtime.contract": "glm53-r27-tp3-min",
+      "local-inference.runtime.source-overlay": "active",
+      "local-inference.runtime.parent": "voipmonitor/vllm:jovian-judgement-community-20260906-r27@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+      "local-inference.cache.fingerprint": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096"
+    },
+    "packaged_source_lock_sha256": "d7c3889f17b75ed4ca8f296998aec05d08b2f350d72f4580f344f32da73517d9",
+    "packaged_tp3_launcher_sha256": "f401b26b4594e5a3082c5f8c06b4926e80b609dc0d401c7a6e4fc3d264da628e",
+    "packaged_verifier_sha256": "490634989c879d96c787179d76545ebff3dc0be5f336468638cefe058550fc30",
+    "child_layers": [
+      "sha256:590d0fa54dfa36aade0613058a49aa6b319f110bfd8bbec044cf7d109a7009d8",
+      "sha256:8acc9f5c80b2abb2eac3e03d15ca74eade26a058f82a7ee3efb3703213d60067",
+      "sha256:1730378722f54b6fc79a88f94ec76b47d3336fbf9ac7d77eb0efe8db75453f5e",
+      "sha256:e3e17ec99c3448884e38a2bf0c0a53d93379d5e85cefec2b8854696e29f9284d"
+    ],
+    "parent_descriptors": [
+      "sha256:ca6f6e4d8c66bb8b9ccc0f1d4e1f89c6cb0a7ee6d6c16c1bbbf3e09483298cf7",
+      "sha256:c1453edcf32708b0831df237a44a87a89cdbfe780741133f2e9422a28c09de0f"
+    ],
+    "parent_collection": "voipmonitor/vllm@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+    "build": {
+      "host": "believewin",
+      "engine": "podman",
+      "tag": "localhost/glm53-r27-tp3-min:r2",
+      "runtime_commit_arg": "2f75b3ffed662741baa26723795afaa5d4cadb20",
+      "vllm_commit_arg": "b03357280b1fac58e672858b511f44bb5fb542a5",
+      "vllm_tree_arg": "1aba8823b76619c9d28fdb932aa7efd932c9f541",
+      "b12x_commit_arg": "f52b0824b4fce4825d7e56af0f4a895eb2239a22",
+      "b12x_tree_arg": "bc1cd882339a78b39cde2a5cff35862d569e1e55",
+      "generic_cache_fingerprint_arg": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096",
+      "validation_runs": "none (Dockerfile RUN gates only: sha256sum -c, bash -n, packaged verifier policy-only + tree checks)"
+    }
+  },
+  "fixed_launcher_set": {
+    "launcher.tp3.path": "/usr/local/bin/serve-glm53-flash-tp3-r27.sh",
+    "launcher.tp3.sha256": "f401b26b4594e5a3082c5f8c06b4926e80b609dc0d401c7a6e4fc3d264da628e",
+    "launcher.dflash.sha256": "a802121b32ff7b1f6f820bee2afc7f17c771dd605af23358c2762634ac9edf00",
+    "launcher.cache-mode.sha256": "f4ba51cf15bb362a321d22ddd08b5c27c71ef60fed8c428ea845f14d3dfb822d",
+    "launcher.lmcache.sha256": "cfee14450faee85732081c393f8868c60b3f77fdd370cce8f93633acaa0f37de"
+  },
+  "gpu_validation": "skipped_by_plan_change",
+  "reason": "r2 republish: CACHE_MODE=native launches in serve-glm53-flash-tp3-r27.sh previously fell through to the dense capture path; r2 wires the native DRAM-offload routing (LMCACHE_ENABLED=0, fail-closed numeric/positive NATIVE_KV_OFFLOADING_SIZE_GB, exec capture_launcher with --kv-offloading-backend native --kv-offloading-size --enable-cumem-allocator plus the strict TP3 tail flags) and re-anchors the revision label from 872bf6d... to the new branch head 2f75b3ff...",
+  "tags_untouched": [
+    "glm53-r17-dual-tp-qualified-vllm87945c472d37-b12x4b604b9a326b-recipe1e876a6864dd",
+    "glm53-r21-tp3-lmcache-recipe01c67936a364",
+    "glm53-r21-tp3-lmcache-recipe01c67936a364-r2",
+    "glm53-r21-tp3-qualified-vllme96b18dbb8c1-b12x6d47b10eddf4-recipe01c67936a364",
+    "glm53-r27-tp3-min-recipe01c67936a364"
+  ],
+  "tag_insertion": "glm53-r27-tp3-min-recipe01c67936a364-r2 only; preflight 404 verified; r1 manifest digest re-checked byte-identical after push"
+}
