@@ -1,0 +1,160 @@
+{
+  "captured_at": "2026-09-07T21:28:57.296589Z",
+  "devices": [
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidia-modeset",
+      "PathOnHost": "/dev/nvidia-modeset"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidia-uvm",
+      "PathOnHost": "/dev/nvidia-uvm"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidia-uvm-tools",
+      "PathOnHost": "/dev/nvidia-uvm-tools"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidiactl",
+      "PathOnHost": "/dev/nvidiactl"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidia0",
+      "PathOnHost": "/dev/nvidia0"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/dri/card0",
+      "PathOnHost": "/dev/dri/card0"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/dri/renderD128",
+      "PathOnHost": "/dev/dri/renderD128"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidia1",
+      "PathOnHost": "/dev/nvidia1"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/dri/card1",
+      "PathOnHost": "/dev/dri/card1"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/dri/renderD129",
+      "PathOnHost": "/dev/dri/renderD129"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/nvidia2",
+      "PathOnHost": "/dev/nvidia2"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/dri/card2",
+      "PathOnHost": "/dev/dri/card2"
+    },
+    {
+      "CgroupPermissions": "",
+      "PathInContainer": "/dev/dri/renderD130",
+      "PathOnHost": "/dev/dri/renderD130"
+    }
+  ],
+  "env_relevant": [
+    "B12X_COMPILE_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/b12x/compile",
+    "B12X_CUTE_COMPILE_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/b12x/cute",
+    "CACHE_MODE=vram",
+    "CMAKE_CUDA_ARCHITECTURES=120a",
+    "CP_KV_CACHE_INTERLEAVE_SIZE=4",
+    "CUDAGRAPH_CAPTURE_SIZES=1 2 4 8 16",
+    "CUDAGRAPH_MODE=FULL",
+    "CUDA_ARCH_LIST=7.5 8.0 8.6 9.0 10.0 12.0",
+    "CUDA_BINARY_LOADER_THREAD_COUNT=8",
+    "CUDA_CACHE_PATH=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/cuda",
+    "CUDA_COMPONENT_LIST=crt nvrtc driver-dev culibos-dev cudart cudart-dev nvcc tileiras",
+    "CUDA_DEVICE_ORDER=PCI_BUS_ID",
+    "CUDA_DRIVER_VERSION=610.43.02",
+    "CUDA_HOME=/usr/local/cuda",
+    "CUDA_MODULE_LOADING=LAZY",
+    "CUDA_VERSION=13.3.1.008",
+    "CUPY_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/cupy",
+    "CUTE_DSL_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/cute-dsl",
+    "DFLASH_ATTENTION_BACKEND=FLASH_ATTN",
+    "DFLASH_DEPTH=7",
+    "DFLASH_KV_CACHE_DTYPE=auto",
+    "DFLASH_MODEL=/root/models/GLM-5.3-Flash-DFlash2",
+    "DFLASH_MODEL_REVISION=aea0ac8a05624512ca9e106c09c16087da998426",
+    "DG_JIT_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/deep-gemm",
+    "FAIRNESS_ENGINE=none",
+    "FLASHINFER_CUDA_ARCH_LIST=12.0f",
+    "JUPYTER_PORT=8888",
+    "LMCACHE_ENABLED=0",
+    "LMCACHE_EXPECTED_SOURCE_ROOT=/opt/venv/lib/python3.12/site-packages/lmcache",
+    "LOCAL_INFERENCE_CACHE_FINGERPRINT=cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete",
+    "MAX_CUDAGRAPH_CAPTURE_SIZE=16",
+    "MAX_MODEL_LEN=1048576",
+    "MINFER_FMHA_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/minfer/fmha-sm120",
+    "MM_SPARSE_ATTN_AOT_CACHE=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/minfer/mm-sparse-attn",
+    "MODEL=/root/models/GLM-5.3-Flash-NVFP4-qad-step2500",
+    "MODEL_OPT_VERSION=0.44.0",
+    "MODEL_REVISION=3959f8a063b77cfdb22ab2e085a1f76fd38b195b",
+    "MTP_ATTENTION_BACKEND=B12X",
+    "NUMBA_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/numba",
+    "NVIDIA_BUILD_ID=373437298",
+    "NVIDIA_DRIVER_CAPABILITIES=compute,utility,video",
+    "NVIDIA_PRODUCT_NAME=PyTorch",
+    "NVIDIA_PYTORCH_VERSION=26.07",
+    "NVIDIA_REQUIRE_CUDA=cuda>=9.0",
+    "NVIDIA_VISIBLE_DEVICES=all",
+    "NVIDIA_VISIBLE_DEVICES=void",
+    "PORT=5800",
+    "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True",
+    "SPARKINFER_COMPILE_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/b12x/compile",
+    "SPECULATOR=dflash2",
+    "TENSORBOARD_PORT=6006",
+    "TILELANG_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/tilelang",
+    "TORCHINDUCTOR_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/torchinductor",
+    "TORCH_CUDA_ARCH_LIST=12.0a",
+    "TP=3",
+    "TRITON_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/triton",
+    "TRITON_CUDACRT_PATH=/usr/local/cuda/include",
+    "TRITON_CUDART_PATH=/usr/local/cuda/include",
+    "TVM_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/tvm",
+    "TVM_FFI_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/tvm-ffi",
+    "UCC_EC_CUDA_EXEC_NUM_THREADS=256",
+    "VLLM_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/vllm",
+    "VLLM_CACHE_ROOT=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/vllm",
+    "VLLM_EXL3_ONLINE_CACHE_DIR=/cache/exl3-online",
+    "VLLM_EXL3_ONLINE_CACHE_MODE=readwrite",
+    "VLLM_FLASHINFER_AUTOTUNE_CACHE_DIR=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete/flashinfer-autotune",
+    "VLLM_GLM53_DFLASH_ATTN=1",
+    "XDG_CACHE_HOME=/cache/jit/cu133-torch213-glm53-r21-vllme96b18db-b12x6d47b10e-cache-complete",
+    "_CUDA_COMPAT_PATH=/usr/local/cuda/compat"
+  ],
+  "image": "docker.io/infernix/vllm@sha256:3f377d02d5cc648ce63c20aa7a02a0ab2c331683be0e4f7382d897ad7524c730",
+  "mounts": [
+    {
+      "dest": "/cache",
+      "source": "/home/gerben/.local/share/containers/storage/volumes/glm53-qad-step2500-vram-runtime-cache/_data",
+      "type": "volume"
+    },
+    {
+      "dest": "/root/models",
+      "source": "/home/gerben/ai/models",
+      "type": "bind"
+    },
+    {
+      "dest": "/root/.cache/huggingface",
+      "source": "/site/private/huggingface",
+      "type": "bind"
+    }
+  ],
+  "note": "captured before the r27-tp3-min GPU validation stop; restore reference"
+}
