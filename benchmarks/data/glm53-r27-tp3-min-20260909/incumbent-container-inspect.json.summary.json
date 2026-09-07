@@ -1,5 +1,10 @@
 {
   "captured_at": "2026-09-07T21:28:57.296589Z",
+<<<<<<< HEAD
+=======
+  "container_image": "docker.io/infernix/vllm@sha256:3f377d02d5cc648ce63c20aa7a02a0ab2c331683be0e4f7382d897ad7524c730",
+  "container_image_config_id": "cdde0976c7a1ca1f3a172dcfcc25ecc0f521e78153fa2be080ad0f0089accb53",
+>>>>>>> 6fa0227 (docs(glm53): capture incumbent glm53 serving state before the r27-tp3-min GPU pass)
   "devices": [
     {
       "CgroupPermissions": "",
@@ -139,6 +144,10 @@
     "_CUDA_COMPAT_PATH=/usr/local/cuda/compat"
   ],
   "image": "docker.io/infernix/vllm@sha256:3f377d02d5cc648ce63c20aa7a02a0ab2c331683be0e4f7382d897ad7524c730",
+<<<<<<< HEAD
+=======
+  "incumbent_serving_model": "/root/models/GLM-5.3-Flash-NVFP4-qad-step2500 (research-only checkpoint)",
+>>>>>>> 6fa0227 (docs(glm53): capture incumbent glm53 serving state before the r27-tp3-min GPU pass)
   "mounts": [
     {
       "dest": "/cache",
@@ -156,5 +165,13 @@
       "type": "bind"
     }
   ],
+<<<<<<< HEAD
   "note": "captured before the r27-tp3-min GPU validation stop; restore reference"
 }
+=======
+  "note": "captured before the r27-tp3-min GPU validation stop; restore reference",
+  "restart_policy": "no",
+  "root_pid": 757691,
+  "supervisor": "llama-swap"
+}
+>>>>>>> 6fa0227 (docs(glm53): capture incumbent glm53 serving state before the r27-tp3-min GPU pass)
