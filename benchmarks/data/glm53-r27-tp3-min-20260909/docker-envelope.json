@@ -2,19 +2,21 @@
   "date": "2026-09-07",
   "evidence_basis": [
     "r1 hashes were measured inside the pulled digest sha256:1fc8f68b2f705d82fe8319901f1ab25fb9162bb9ac6ae50320b808c81e28042e (docker run sha256sum on the five packaged files); r2 hashes recorded from the r2 manifest/config labels.",
-    "r3 hashes were computed in-repo pre-build (tp3 launcher 59529a3994413bb1d8cd89d499e638de2562d563d7061382f7fce8c47679250d -> source.lock a46f44de8c7298b248a997dc59d49d389cc849a11621a1b67c618fbdbd12f7ee -> verifier b7192d68032cf29a9e16bddd846c5edcbf23a13d84b61d85492684bdb438b865), gated by the in-build sha256sum/bash -n/verifier verdicts, and re-read verbatim from the pushed config blob sha256:832bc3b2d660763c5551db1d9017d25ec6714769c9fb06f7831862eb84263d9a; the verifier hash is now its own label (local-inference.runtime.verifier.sha256)."
+    "r3 hashes were computed in-repo pre-build (tp3 launcher 59529a3994413bb1d8cd89d499e638de2562d563d7061382f7fce8c47679250d -> source.lock a46f44de8c7298b248a997dc59d49d389cc849a11621a1b67c618fbdbd12f7ee -> verifier b7192d68032cf29a9e16bddd846c5edcbf23a13d84b61d85492684bdb438b865), gated by the in-build sha256sum/bash -n/verifier verdicts, and re-read verbatim from the pushed config blob sha256:832bc3b2d660763c5551db1d9017d25ec6714769c9fb06f7831862eb84263d9a; the verifier hash is now its own label (local-inference.runtime.verifier.sha256).",
+    "r4 hashes were measured inside the built image on believewin (podman run --entrypoint sha256sum: source.lock c94ce47bc4101d2256f597675481ad8f7ed2e7a52852f107d7bd0882b0611a34, tp3 launcher 60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4, verifier fffd128a10fe4010f901fe31c3c02b3dbd396bb78a5cb050411ac91a3f96aa0d) and re-read verbatim from the pushed config blob sha256:77fecab95f8f80ec9114f829093f184ae47008bf615aacd9e7c66e099b4944fe."
   ],
   "fixed_launcher_set": {
     "launcher.cache-mode.sha256": "f4ba51cf15bb362a321d22ddd08b5c27c71ef60fed8c428ea845f14d3dfb822d",
     "launcher.dflash.sha256": "a802121b32ff7b1f6f820bee2afc7f17c771dd605af23358c2762634ac9edf00",
     "launcher.lmcache.sha256": "cfee14450faee85732081c393f8868c60b3f77fdd370cce8f93633acaa0f37de",
     "launcher.tp3.path": "/usr/local/bin/serve-glm53-flash-tp3-r27.sh",
-    "launcher.tp3.sha256": "f401b26b4594e5a3082c5f8c06b4926e80b609dc0d401c7a6e4fc3d264da628e"
+    "launcher.tp3.sha256": "60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4"
   },
   "gpu_validation": "skipped_by_plan_change",
   "notes": [
     "The r1/r2 fingerprint label records the GENERIC namespace (...p2048-bt4096). TP3 launches resolve their own JIT directory (the tp3_launch_cache_namespace above) \u2014 a future rebuild must keep both names coherent (generic label = R27 TP4 contract; tp3 namespace = strict chain sha8192).",
-    "r2 baked vllm b03357280b/b12x f52b0824 (one pre-final-port commit behind the branch heads); r3 anchors exactly the canonical heads \u2014 vllm e5b0fc0f4a (its branch is research/glm53-tp3-r27: the -min name still tips at the r2-era bake, so the r3 vllm.ref row and branch label moved with it) and b12x fdb5bc7b (on research/glm53-tp3-r27-min). Only the -r3 tag carries the final port heads."
+    "r2 baked vllm b03357280b/b12x f52b0824 (one pre-final-port commit behind the branch heads); r3 anchors exactly the canonical heads \u2014 vllm e5b0fc0f4a (its branch is research/glm53-tp3-r27: the -min name still tips at the r2-era bake, so the r3 vllm.ref row and branch label moved with it) and b12x fdb5bc7b (on research/glm53-tp3-r27-min). Only the -r3 tag carries the final port heads.",
+    "r3's vllm bake came from the replay-wider research/glm53-tp3-r27 line (e5b0fc0f4a/tree 3f70a779, six slim-pass-dropped files in) and is superseded by r4, which re-pins the minimal TP3 surface: vllm b03357280b/tree 1aba8823 (the -min branch; the r1/r2-era package tree) and b12x fdb5bc7b kept \u2014 the tp3 namespace fingerprint gains the received b12x token (vllmb033572b-b12xfdb5bc7b) while the vllm token returns to b033572b."
   ],
   "r1": {
     "config_digest": "sha256:455e062062784e04fbb747f60ed277982a94212e5113591048525628b3aac36b",
@@ -115,18 +117,61 @@
     ],
     "tag": "infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364-r3"
   },
-  "reason": "r2 republish: CACHE_MODE=native launches in serve-glm53-flash-tp3-r27.sh previously fell through to the dense capture path; r2 wires the native DRAM-offload routing (LMCACHE_ENABLED=0, fail-closed numeric/positive NATIVE_KV_OFFLOADING_SIZE_GB, exec capture_launcher with --kv-offloading-backend native --kv-offloading-size --enable-cumem-allocator plus the strict TP3 tail flags) and re-anchors the revision label from 872bf6d... to the new branch head 2f75b3ff...",
+  "r4": {
+    "build": {
+      "b12x_commit_arg": "fdb5bc7bc13da1ed46b373f536d803b6645a02df",
+      "b12x_tree_arg": "5a8d6547dcc29760716257a3de31e6cd98ea87fe",
+      "engine": "podman",
+      "generic_cache_fingerprint_arg": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096",
+      "host": "believewin",
+      "runtime_commit_arg": "90fd4192d1f530c93451120e710ffa05440cdbed",
+      "tag": "localhost/glm53-r27-tp3-min:r4",
+      "validation_runs": "none (Dockerfile RUN gates only: sha256sum -c, bash -n, packaged verifier policy-only + tree checks); packaged hashes measured pre-push (podman run --entrypoint sha256sum)",
+      "vllm_commit_arg": "b03357280b1fac58e672858b511f44bb5fb542a5",
+      "vllm_tree_arg": "1aba8823b76619c9d28fdb932aa7efd932c9f541"
+    },
+    "child_layers": [
+      "sha256:f1b606e52c55c90804ca9fff31efa3a2f6ab0bbfcd3a29fd16a6803f907a185b",
+      "sha256:7b37fe52fa49c6951e20ae2103e9fc7a9678866b464423e4c6428180c3476180",
+      "sha256:6ed69e1ed0f461b6b8b273aa704a956bb896972f1c624389d3e0e483f6ca98ce",
+      "sha256:d40dca3af9692e66c0b54dbf251f677d060b8e97957b35183b45bd4b2b07276e"
+    ],
+    "config_digest": "sha256:77fecab95f8f80ec9114f829093f184ae47008bf615aacd9e7c66e099b4944fe",
+    "labels": {
+      "local-inference.cache.fingerprint": "cu133-torch213-glm53-vllma336313d-fkda3b225bf-b12x95fdcb1c-lmcachefe5442fb-p2048-bt4096",
+      "local-inference.runtime.contract": "glm53-r27-tp3-min",
+      "local-inference.runtime.parent": "voipmonitor/vllm:jovian-judgement-community-20260906-r27@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+      "local-inference.runtime.source-lock.sha256": "c94ce47bc4101d2256f597675481ad8f7ed2e7a52852f107d7bd0882b0611a34",
+      "local-inference.runtime.source-overlay": "active",
+      "local-inference.runtime.tp3-launcher.sha256": "60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4",
+      "local-inference.runtime.verifier.sha256": "fffd128a10fe4010f901fe31c3c02b3dbd396bb78a5cb050411ac91a3f96aa0d",
+      "org.opencontainers.image.revision": "90fd4192d1f530c93451120e710ffa05440cdbed",
+      "note": "vllm.ref reset to refs/heads/research/glm53-tp3-r27-min (the -min branch carries b03357280b with the MTP-head fix; the e5b0fc0f4a head lives on research/glm53-tp3-r27 and stays there for the future -provenance republish)"
+    },
+    "manifest_digest": "sha256:c7d96cc734d5a312508bcd5a93152c1ea6f3df565130a1c567ec6be2cd13d16a",
+    "packaged_source_lock_sha256": "c94ce47bc4101d2256f597675481ad8f7ed2e7a52852f107d7bd0882b0611a34",
+    "packaged_tp3_launcher_sha256": "60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4",
+    "packaged_verifier_sha256": "fffd128a10fe4010f901fe31c3c02b3dbd396bb78a5cb050411ac91a3f96aa0d",
+    "parent_collection": "voipmonitor/vllm@sha256:a298fe1cd207eaf97bd2ff2686716ed25b7009c09b36650eba732a4a7dc51512",
+    "parent_descriptors": [
+      "sha256:ca6f6e4d8c66bb8b9ccc0f1d4e1f89c6cb0a7ee6d6c16c1bbbf3e09483298cf7",
+      "sha256:c1453edcf32708b0831df237a44a87a89cdbfe780741133f2e9422a28c09de0f"
+    ],
+    "tag": "infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364-r4"
+  },
+  "reason": "r2 republish: CACHE_MODE=native launches in serve-glm53-flash-tp3-r27.sh previously fell through to the dense capture path; r2 wires the native DRAM-offload routing (LMCACHE_ENABLED=0, fail-closed numeric/positive NATIVE_KV_OFFLOADING_SIZE_GB, exec capture_launcher with --kv-offloading-backend native --kv-offloading-size --enable-cumem-allocator plus the strict TP3 tail flags) and re-anchors the revision label from 872bf6d... to the new branch head 2f75b3ff...; r3 baked the replay-wider vllm line (e5b0fc0f4a/tree 3f70a779, carrying the six slim-pass-dropped files) and is superseded by r4, which re-pins the minimal -min surface (vllm b03357280b/tree 1aba8823, b12x fdb5bc7b kept) and promotes the packaged verifier hash to its own label",
   "receipt": "docker-envelope",
   "runtime_branch": "research/glm53-r27-tp3-min-overlay",
   "runtime_repository": "https://github.com/infernix/blackwell-llm-docker",
-  "tag_insertion": "glm53-r27-tp3-min-recipe01c67936a364-r3 only; preflight 404 verified; r1 and r2 manifest digests re-checked byte-identical after push",
+  "tag_insertion": "glm53-r27-tp3-min-recipe01c67936a364-r4 only; preflight 404 verified; r1, r2 and r3 manifest digests re-checked byte-identical after push",
   "tags_untouched": [
     "glm53-r17-dual-tp-qualified-vllm87945c472d37-b12x4b604b9a326b-recipe1e876a6864dd",
     "glm53-r21-tp3-lmcache-recipe01c67936a364",
     "glm53-r21-tp3-lmcache-recipe01c67936a364-r2",
     "glm53-r21-tp3-qualified-vllme96b18dbb8c1-b12x6d47b10eddf4-recipe01c67936a364",
     "glm53-r27-tp3-min-recipe01c67936a364",
-    "glm53-r27-tp3-min-recipe01c67936a364-r2"
+    "glm53-r27-tp3-min-recipe01c67936a364-r2",
+    "glm53-r27-tp3-min-recipe01c67936a364-r3"
   ],
-  "tp3_launch_cache_namespace": "cu133-torch213-glm53-r27-tp3-vllme5b0fc0f-b12xfdb5bc7b-dense-ctx1m-seq8-bt8192"
+  "tp3_launch_cache_namespace": "cu133-torch213-glm53-r27-tp3-vllmb033572b-b12xfdb5bc7b-dense-ctx1m-seq8-bt8192"
 }
