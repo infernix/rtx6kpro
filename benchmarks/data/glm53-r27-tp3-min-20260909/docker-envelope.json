@@ -11,6 +11,9 @@
     "launcher.tp3.sha256": "f401b26b4594e5a3082c5f8c06b4926e80b609dc0d401c7a6e4fc3d264da628e"
   },
   "gpu_validation": "skipped_by_plan_change",
+  "notes": [
+    "The r1/r2 fingerprint label records the GENERIC namespace (...p2048-bt4096). TP3 launches resolve their own JIT directory (the tp3_launch_cache_namespace above) \u2014 a future rebuild must keep both names coherent (generic label = R27 TP4 contract; tp3 namespace = strict chain sha8192)."
+  ],
   "r1": {
     "config_digest": "sha256:455e062062784e04fbb747f60ed277982a94212e5113591048525628b3aac36b",
     "errata": "org.opencontainers.image.revision anchors 872bf6d... while the packaged content carries the 263320b-era verifier (identical content across both anchors); the revision label lags the branch head.",
@@ -80,5 +83,6 @@
     "glm53-r21-tp3-lmcache-recipe01c67936a364-r2",
     "glm53-r21-tp3-qualified-vllme96b18dbb8c1-b12x6d47b10eddf4-recipe01c67936a364",
     "glm53-r27-tp3-min-recipe01c67936a364"
-  ]
+  ],
+  "tp3_launch_cache_namespace": "cu133-torch213-glm53-r27-tp3-vllmb033572b-b12xf52b0824-dense-ctx1m-seq8-bt8192"
 }
