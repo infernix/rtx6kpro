@@ -85,9 +85,10 @@ def text_answer(base: str, prompt: str, max_tokens: int = 256) -> tuple[str, dic
 
 
 def long_prompt_tokens(target_tokens: int) -> str:
-    # deterministic filler that tokenizes at roughly one token per five chars
-    filler = " ".join([LONG_PROMPT_WORDS] * (target_tokens * 5 // len(LONG_PROMPT_WORDS) + 1))
-    return f"Remember the code word ORCHID-7319. {filler[: int(target_tokens * 5)]} What code word did I ask you to remember?"
+    # measured on this stack: "pineapple " costs ~10 chars per token, so the
+    # character budget is doubled to land near the nominal token count
+    filler = " ".join([LONG_PROMPT_WORDS] * (target_tokens * 10 // len(LONG_PROMPT_WORDS) + 1))
+    return f"Remember the code word ORCHID-7319. {filler[: int(target_tokens * 10)]} What code word did I ask you to remember?"
 
 
 def main() -> None:
