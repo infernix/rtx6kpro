@@ -43,8 +43,8 @@ On RTX PRO 6000 (SM120, no TMEM/tcgen05, 102 KB shared memory per SM):
    fallback module + the `dsa_backend.py` patch — this is the configuration
    recorded on this page. `flashinfer_cutedsl` is NOT usable here: FlashInfer's
    CuteDSL MoE hard-codes `supported_major_versions=[10]`.
-4. On consumer/pro-workstation Blackwell, MoE runner must be `flashinfer_cutlass` — the
-   SM120-native CUTLASS FP4 path in this image.
+4. On consumer/pro-workstation Blackwell (RTX PRO 6000, SM120), MoE runner must be
+   `flashinfer_cutlass` — the SM120-native CUTLASS FP4 path in this image.
 
 ## Locked image and checkpoint
 
@@ -173,9 +173,9 @@ Deltas vs the bundle's locked CMD (all measured here, none in the bundle):
 ## Client usage notes
 
 - Per the bundle README: under default (max) reasoning effort the visible
-  `content` stays empty for a while while tokens burn inside an invisible reasoning block — either
-  drop `max_tokens`/let the model stop naturally, or set
-  `chat_template_kwargs.reasoning_effort = "low"`.
+  `content` field stays empty while the budget burns `reasoning_content` —
+  do not pass a small `max_tokens`; either let the model stop naturally or
+  set `chat_template_kwargs.reasoning_effort = "low"`.
 - Sampling: the checkpoint's `generation_config.json` defaults temperature
   1.0 / top_p 0.95 (the recipes keep them when the deterministic behavior is
   not required).
