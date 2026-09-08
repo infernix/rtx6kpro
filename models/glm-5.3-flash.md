@@ -514,7 +514,8 @@ bounded); `FAIRNESS_ENGINE=none` + `PREFILL_SCHEDULE_INTERVAL=8` ship as one
 knob pair.
 
 Fail-closed in the opposite direction too: the verifier's `REQUIRED_UNSET_ENV`
-set must not be provided at all —
+set in `overlays/glm53-r27/tests/verify_glm53_flash_nvfp4_runtime.py` must not
+be provided at all —
 `KV_CACHE_QUANT`, `VLLM_KV_CACHE_LAYOUT`, `VLLM_SSM_CONV_STATE_LAYOUT`,
 `VLLM_DP_SIZE`, `VLLM_DP_RANK`, `VLLM_DP_RANK_LOCAL`, `VLLM_DP_MASTER_IP`,
 `VLLM_DP_MASTER_PORT`, `GLM53_TARGET_BLOCK_SIZE`, `GLM53_MAMBA_BLOCK_SIZE`,
@@ -541,6 +542,7 @@ determinism, a 1,000,035-token admission (end-to-end request time), a 4x
 double pass. Receipts:
 [receipts-vast-r6/](https://github.com/infernix/rtx6kpro/tree/docs/glm53-r27-tp3-min-20260909/benchmarks/data/glm53-r27-tp3-min-20260909/receipts-vast-r6)
 on this branch.
+
 The 1M-prefill column is single-request end-to-end elapsed (~8.3–8.8k tok/s
 over ~121 s); the 4x131K burst column reports the per-request elapsed while
 four requests run simultaneously, so the aggregate over that window is 4x the
