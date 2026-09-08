@@ -41,6 +41,7 @@ require local checkpoint paths or source-code bind mounts.
 | Additional qualification | **qualified** for TP4/DCP4 DFlash2 prefill with full compressed-key/value (CKV) gathering |
 | TP3 candidate overlay | **research-only validated** 2026-09-08: TP3/EP3/DCP1 chain reconstructed on the R27 sources, six serving-configurations passed; receipts bound to `infernix/vllm@sha256:1871c461…`. See [TP3 three-GPU candidate](#tp3-three-gpu-candidate-research-overlay-2026-09-08). |
 | Hardware | four RTX PRO 6000 Blackwell Workstation Edition GPUs, PCIe 5.0 x16, stock clocks |
+| SGLang SM120 recipe | [glm-5.3-flash-sglang.md](glm-5.3-flash-sglang.md) — research-only, hand-operated (patched bundle; NEXTN MTP; not part of the qualified vLLM artifact) |
 | Target checkpoint | `local-inference-lab/GLM-5.3-Flash-NVFP4` |
 | Target update policy | resolve the Hugging Face `main` branch at startup; no runtime revision pin |
 | Target routed experts | ModelOpt NVFP4, B12X 4-bit-weight/4-bit-activation (W4A4) |
