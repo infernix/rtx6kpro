@@ -6,11 +6,32 @@
     "r4 hashes were measured inside the built image on believewin (podman run --entrypoint sha256sum: source.lock c94ce47bc4101d2256f597675481ad8f7ed2e7a52852f107d7bd0882b0611a34, tp3 launcher 60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4, verifier fffd128a10fe4010f901fe31c3c02b3dbd396bb78a5cb050411ac91a3f96aa0d) and re-read verbatim from the pushed config blob sha256:77fecab95f8f80ec9114f829093f184ae47008bf615aacd9e7c66e099b4944fe."
   ],
   "fixed_launcher_set": {
-    "launcher.cache-mode.sha256": "f4ba51cf15bb362a321d22ddd08b5c27c71ef60fed8c428ea845f14d3dfb822d",
-    "launcher.dflash.sha256": "a802121b32ff7b1f6f820bee2afc7f17c771dd605af23358c2762634ac9edf00",
-    "launcher.lmcache.sha256": "cfee14450faee85732081c393f8868c60b3f77fdd370cce8f93633acaa0f37de",
-    "launcher.tp3.path": "/usr/local/bin/serve-glm53-flash-tp3-r27.sh",
-    "launcher.tp3.sha256": "60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4"
+    "chosen_artifact": "infernix/vllm@sha256:c7d96cc734d5a312508bcd5a93152c1ea6f3df565130a1c567ec6be2cd13d16a",
+    "note_lock_shas_shared": "the vLLM/b12x/lmcache *_integration.lock_sha256 labels intentionally carry the same c94ce47b\u2026 value: all three record the same packaged source.lock bytes",
+    "r4_labels": {
+      "local-inference.runtime.b12x.commit": "fdb5bc7bc13da1ed46b373f536d803b6645a02df",
+      "local-inference.runtime.launcher.sha256": "f4ba51cf15bb362a321d22ddd08b5c27c71ef60fed8c428ea845f14d3dfb822d",
+      "local-inference.runtime.lmcache-launcher.sha256": "cfee14450faee85732081c393f8868c60b3f77fdd370cce8f93633acaa0f37de",
+      "local-inference.runtime.model-launcher.sha256": "a802121b32ff7b1f6f820bee2afc7f17c771dd605af23358c2762634ac9edf00",
+      "local-inference.runtime.source-lock.sha256": "c94ce47bc4101d2256f597675481ad8f7ed2e7a52852f107d7bd0882b0611a34",
+      "local-inference.runtime.tp3-launcher.sha256": "60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4",
+      "local-inference.runtime.verifier.sha256": "fffd128a10fe4010f901fe31c3c02b3dbd396bb78a5cb050411ac91a3f96aa0d",
+      "local-inference.runtime.vllm.commit": "b03357280b1fac58e672858b511f44bb5fb542a5",
+      "org.opencontainers.image.revision": "90fd4192d1f530c93451120e710ffa05440cdbed"
+    },
+    "ruff_census": {
+      "commands": [
+        "ruff check b12x tests/policy tests/moe tests/attention tests/comm tests/sequence --select E9,F401,F821,F811,F632,B005,B023,I001",
+        "ruff check b12x tests/policy tests/moe tests/attention tests/comm tests/sequence"
+      ],
+      "default_base": 165,
+      "default_min": 165,
+      "narrow_base": 79,
+      "narrow_min": 79,
+      "narrow_selector": "E9,F401,F821,F811,F632,B005,B023,I001",
+      "vllm_side": "py_compile-verified (35/35); ruff sweep not run (deferred to the validation wave)"
+    },
+    "tree_kind_note": "b12x repo tree at the -min head = 5a8d6547dcc29760716257a3de31e6cd98ea87fe; b12x package tree (inherited, as labeled bc1cd882\u2026) is the built-package subtree - distinct kinds, keep labeled separately"
   },
   "gpu_validation": "skipped_by_plan_change",
   "notes": [
@@ -145,8 +166,8 @@
       "local-inference.runtime.source-overlay": "active",
       "local-inference.runtime.tp3-launcher.sha256": "60170ecc9465c32c4ba250a6c1b49e997237856f5e44a267177632c2f0a3d2f4",
       "local-inference.runtime.verifier.sha256": "fffd128a10fe4010f901fe31c3c02b3dbd396bb78a5cb050411ac91a3f96aa0d",
-      "org.opencontainers.image.revision": "90fd4192d1f530c93451120e710ffa05440cdbed",
-      "note": "vllm.ref reset to refs/heads/research/glm53-tp3-r27-min (the -min branch carries b03357280b with the MTP-head fix; the e5b0fc0f4a head lives on research/glm53-tp3-r27 and stays there for the future -provenance republish)"
+      "note": "vllm.ref reset to refs/heads/research/glm53-tp3-r27-min (the -min branch carries b03357280b with the MTP-head fix; the e5b0fc0f4a head lives on research/glm53-tp3-r27 and stays there for the future -provenance republish)",
+      "org.opencontainers.image.revision": "90fd4192d1f530c93451120e710ffa05440cdbed"
     },
     "manifest_digest": "sha256:c7d96cc734d5a312508bcd5a93152c1ea6f3df565130a1c567ec6be2cd13d16a",
     "packaged_source_lock_sha256": "c94ce47bc4101d2256f597675481ad8f7ed2e7a52852f107d7bd0882b0611a34",
