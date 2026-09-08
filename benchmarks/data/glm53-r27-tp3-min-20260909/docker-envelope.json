@@ -37,7 +37,12 @@
   "notes": [
     "The r1/r2 fingerprint label records the GENERIC namespace (...p2048-bt4096). TP3 launches resolve their own JIT directory (the tp3_launch_cache_namespace above) \u2014 a future rebuild must keep both names coherent (generic label = R27 TP4 contract; tp3 namespace = strict chain sha8192).",
     "r2 baked vllm b03357280b/b12x f52b0824 (one pre-final-port commit behind the branch heads); r3 anchors exactly the canonical heads \u2014 vllm e5b0fc0f4a (its branch is research/glm53-tp3-r27: the -min name still tips at the r2-era bake, so the r3 vllm.ref row and branch label moved with it) and b12x fdb5bc7b (on research/glm53-tp3-r27-min). Only the -r3 tag carries the final port heads.",
-    "r3's vllm bake came from the replay-wider research/glm53-tp3-r27 line (e5b0fc0f4a/tree 3f70a779, six slim-pass-dropped files in) and is superseded by r4, which re-pins the minimal TP3 surface: vllm b03357280b/tree 1aba8823 (the -min branch; the r1/r2-era package tree) and b12x fdb5bc7b kept \u2014 the tp3 namespace fingerprint gains the received b12x token (vllmb033572b-b12xfdb5bc7b) while the vllm token returns to b033572b."
+    "r3's vllm bake came from the replay-wider research/glm53-tp3-r27 line (e5b0fc0f4a/tree 3f70a779, six slim-pass-dropped files in) and is superseded by r4, which re-pins the minimal TP3 surface: vllm b03357280b/tree 1aba8823 (the -min branch; the r1/r2-era package tree) and b12x fdb5bc7b kept \u2014 the tp3 namespace fingerprint gains the received b12x token (vllmb033572b-b12xfdb5bc7b) while the vllm token returns to b033572b.",
+    "label->value verified per key from the r4 image at digest c7d96cc7... on the pull host; values match fixed_launcher_set exactly - no drift",
+    "the strict R27 TP3 launcher pins locked_dflash_revision=huggingface-main (line 152) - the R27 recipe's own published contract for the draft checkpoint; receipts must record this explicitly, not as an accidental mutable-main state",
+    "cache.fingerprint / runtime.cache-fingerprint / runtime.cache.fingerprint all carry the inherited generic namespace (vllma336313d...p2048-bt4096); the TP3 JIT dir is cache.tp3.fingerprint inside source.lock (vllmb033572b-b12xfdb5bc7b-dense-ctx1m-seq8-bt8192 at r4); a336313d is NOT a fourth source pin",
+    "only tp3-launcher (60170ecc), source-lock (c94ce47b), verifier (fffd128a) rotated at r4; launcher (f4ba51cf), model-launcher (a802121b), lmcache-launcher (cfee1445) carried over unchanged from R21-family bakes",
+    "-min and -r27 carry the same MTP-head patch as distinct commit objects (patch-id identical) - content parity is by patch, not SHA"
   ],
   "r1": {
     "config_digest": "sha256:455e062062784e04fbb747f60ed277982a94212e5113591048525628b3aac36b",
