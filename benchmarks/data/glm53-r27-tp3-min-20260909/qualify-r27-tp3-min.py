@@ -114,7 +114,7 @@ def main() -> None:
                      "conditions": {"temperature": 0.0, "seed": 0, "fresh_server_profile": True,
                                     "warmup_requests": args.warmups,
                                     "prefill_trials": args.prefill_trials,
-                                   "ladder_methodology": "decode ladder (concurrency 1,4,8,16,30 x contexts 0,16k,32k, duration 30) runs container-side via llm_decode_bench.py in the validation wave; archived methodology recorded temperature:null vs this wave temperature:0/seed:0"
+                                   "ladder_methodology": "decode ladder (concurrency 1,4,8,16,30 x contexts 0,16k,32k, duration 30) runs container-side via llm_decode_bench.py in the validation wave; archived methodology recorded temperature:null vs this wave temperature:0/seed:0",
                                     "decode_trials": args.decode_trials}}
 
     if args.expected:
