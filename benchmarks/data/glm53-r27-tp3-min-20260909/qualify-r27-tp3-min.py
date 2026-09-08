@@ -17,12 +17,10 @@ Usage:
 """
 import argparse
 import base64
-import io
 import json
-import statistics
+import pathlib
 import struct
 import time
-import pathlib
 import urllib.error
 import urllib.request
 import zlib
@@ -202,8 +200,8 @@ def main() -> None:
     # prefix-cache reuse (double-pass on identical prompt)
     if not args.skip_prefix:
         prompt = long_prompt_tokens(min(65_536, args.long_tokens))
-        t0 = time.perf_counter(); a1, r1 = text_answer(base, prompt, max_tokens=8); t1 = time.perf_counter() - t0
-        t0 = time.perf_counter(); a2, r2 = text_answer(base, prompt, max_tokens=8); t2 = time.perf_counter() - t0
+        t0 = time.perf_counter(); a1, _r1 = text_answer(base, prompt, max_tokens=8); t1 = time.perf_counter() - t0
+        t0 = time.perf_counter(); a2, _r2 = text_answer(base, prompt, max_tokens=8); t2 = time.perf_counter() - t0
         receipt["prefix_cache_reuse"] = {
             "pass1_seconds": round(t1, 3), "pass2_seconds": round(t2, 3),
             "speedup": round(t1 / t2, 2) if t2 > 0 else None,
@@ -220,7 +218,7 @@ def main() -> None:
                 "messages": [{"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{png_b64}"}},
                     {"type": "text", "text": "What color is this single image?"}]}],
-                "temperature": 0.0, "seed": 0, "max_tokens": 32,
+                "temperature": 0.0, "seed": 0, "max_tokens": 96,
             }
             data = json.dumps(payload).encode()
             req = urllib.request.Request(base + "/v1/chat/completions", data=data,
@@ -228,13 +226,14 @@ def main() -> None:
             with urllib.request.urlopen(req, timeout=1800) as resp:
                 result = json.load(resp)
             msg = result["choices"][0]["message"]
-            seen = (msg.get("content") or "").strip()[:16]
+            seen = (msg.get("content") or "").strip()[:48]
             vision_results.append({"color": row["color"], "seen": seen,
                                    "accept": row["expect"].lower() in seen.lower() or row["alt"].lower() in seen.lower()})
         receipt["frozen_probes_vision"] = {"rows": len(vision_results), "results": vision_results}
 
-    json.dump(receipt, open(args.out, "w"), indent=2, sort_keys=True)
-    open(args.out, "a").write("\n")
+    with open(args.out, "w") as fh:
+        json.dump(receipt, fh, indent=2, sort_keys=True)
+        fh.write("\n")
     print(json.dumps({k: receipt.get(k) for k in ("mode", "smoke", "determinism")}, indent=2))
 
 
