@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R27-tp3-min per-pass qualification client.
+"""R27-tp3-min per-pass qualification client (probe row split: 7 text + 2 vision rows, counts derived from probe-corpus.json).
 
 Drives a running GLM-5.3-Flash NVFP4 server through the fixed qualification
 order and writes a JSON receipt per pass:
@@ -114,6 +114,7 @@ def main() -> None:
                      "conditions": {"temperature": 0.0, "seed": 0, "fresh_server_profile": True,
                                     "warmup_requests": args.warmups,
                                     "prefill_trials": args.prefill_trials,
+                                   "ladder_methodology": "decode ladder (concurrency 1,4,8,16,30 x contexts 0,16k,32k, duration 30) runs container-side via llm_decode_bench.py in the validation wave; archived methodology recorded temperature:null vs this wave temperature:0/seed:0"
                                     "decode_trials": args.decode_trials}}
 
     if args.expected:
@@ -128,9 +129,17 @@ def main() -> None:
         if row["kind"] != "text":
             continue
         answer, _ = text_answer(base, row["prompt"])
-        corpus_results.append({"row": row["prompt"][:40], "accept": (row["expect"] and answer.strip() == row["expect"]),
+        graded = row["expect"] is not None
+        corpus_results.append({"row": row["prompt"][:40], "graded": graded,
+                               "accept": (answer.strip() == row["expect"]) if graded else None,
                                "answer": answer.strip()[:64]})
-    receipt["frozen_probes_text"] = {"rows": len(corpus_results), "results": corpus_results}
+    graded_rows = [row for row in corpus_results if row["graded"]]
+    receipt["frozen_probes_text"] = {
+        "rows": len(corpus_results),
+        "graded_rows": len(graded_rows),
+        "graded_pass": sum(1 for row in graded_rows if row["accept"]),
+        "results": corpus_results,
+    }
 
     # determinism is unconditional: repeat the expected smoke prompt, or the first
     # text corpus row when --expected is absent; a skipped check must be visible
