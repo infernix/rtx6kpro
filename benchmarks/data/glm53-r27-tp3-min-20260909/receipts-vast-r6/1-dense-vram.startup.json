@@ -1,0 +1,10 @@
+{
+  "cold_jit": true,
+  "hf_home": "nvme",
+  "image_digest": "infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1ffdcc1",
+  "jit_note": "fresh node /cache/jit is empty: pass-1 startup includes Triton/CuTe/FlashInfer autotune compile; later passes reuse the same fingerprint cache inside this container",
+  "launcher_pid": 5510,
+  "ready_to_health": 1,
+  "startup_seconds": 231,
+  "weight_source": "/root/.cache/huggingface (host NVMe)"
+}

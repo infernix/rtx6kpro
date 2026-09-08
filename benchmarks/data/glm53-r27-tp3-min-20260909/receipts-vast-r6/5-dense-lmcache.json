@@ -1,0 +1,129 @@
+{
+  "conditions": {
+    "decode_trials": 5,
+    "fresh_server_profile": true,
+    "ladder_methodology": "decode ladder (concurrency 1,4,8,16,30 x contexts 0,16k,32k, duration 30) runs container-side via llm_decode_bench.py in the validation wave; archived methodology recorded temperature:null vs this wave temperature:0/seed:0",
+    "prefill_trials": 3,
+    "seed": 0,
+    "temperature": 0.0,
+    "warmup_requests": 1
+  },
+  "determinism": {
+    "answers": [
+      "R27 TP3 lmcache works",
+      "R27 TP3 lmcache works",
+      "R27 TP3 lmcache works",
+      "R27 TP3 lmcache works",
+      "R27 TP3 lmcache works"
+    ],
+    "pass": true,
+    "trials": 5
+  },
+  "four_way_128k_concurrency": {
+    "all_ok": true,
+    "results": [
+      {
+        "answer_head": "",
+        "elapsed_seconds": 2.147,
+        "ok": true,
+        "prompt_tokens": 131107
+      },
+      {
+        "answer_head": "",
+        "elapsed_seconds": 2.16,
+        "ok": true,
+        "prompt_tokens": 131107
+      },
+      {
+        "answer_head": "",
+        "elapsed_seconds": 2.447,
+        "ok": true,
+        "prompt_tokens": 131107
+      },
+      {
+        "answer_head": "",
+        "elapsed_seconds": 2.497,
+        "ok": true,
+        "prompt_tokens": 131107
+      }
+    ]
+  },
+  "frozen_probes_text": {
+    "graded_pass": 5,
+    "graded_rows": 5,
+    "results": [
+      {
+        "accept": true,
+        "answer": "R27 TP3 ordinary works",
+        "graded": true,
+        "row": "Reply with exactly: R27 TP3 ordinary wor"
+      },
+      {
+        "accept": true,
+        "answer": "R27 TP3 MTP3 works",
+        "graded": true,
+        "row": "Reply with exactly: R27 TP3 MTP3 works"
+      },
+      {
+        "accept": true,
+        "answer": "R27 TP3 DFlash2 works",
+        "graded": true,
+        "row": "Reply with exactly: R27 TP3 DFlash2 work"
+      },
+      {
+        "accept": true,
+        "answer": "QAD borderline probe pass",
+        "graded": true,
+        "row": "Reply with exactly: QAD borderline probe"
+      },
+      {
+        "accept": null,
+        "answer": "",
+        "graded": false,
+        "row": "State the rule for choosing an activatio"
+      },
+      {
+        "accept": true,
+        "answer": "twenty-two seconds",
+        "graded": true,
+        "row": "Reply with exactly: twenty-two seconds"
+      },
+      {
+        "accept": null,
+        "answer": "",
+        "graded": false,
+        "row": "Explain, in one short sentence, why the "
+      }
+    ],
+    "rows": 7
+  },
+  "host_port": "127.0.0.1:8000",
+  "long_context_admission": {
+    "answer_head": "",
+    "completion_tokens_reported": 16,
+    "elapsed_seconds": 116.4,
+    "prompt_tok_per_s": 8591.4,
+    "prompt_tokens_reported": 1000035,
+    "prompt_tokens_target": 1000000
+  },
+  "mode": "lmcache",
+  "prefix_cache_reuse": {
+    "pass1_seconds": 0.529,
+    "pass2_seconds": 0.519,
+    "same_answer": true,
+    "speedup": 1.02
+  },
+  "smoke": {
+    "accept": true,
+    "response": "R27 TP3 lmcache works",
+    "usage": {
+      "completion_tokens": 109,
+      "completion_tokens_details": {
+        "reasoning_tokens": 100
+      },
+      "prompt_tokens": 23,
+      "prompt_tokens_details": null,
+      "total_tokens": 132
+    }
+  }
+}

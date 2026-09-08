@@ -1,0 +1,10 @@
+/opt/venv/bin/python /opt/venv/bin/vllm serve local-inference-lab/GLM-5.3-Flash-NVFP4 --revision 46aaae8a82032f77100f2f03e9cc11b391df3b4d --served-model-name GLM-5.3-Flash-NVFP4 --host 0.0.0.0 --port 8000 --tensor-parallel-size 3 --pipeline-parallel-size 1 --decode-context-parallel-size 1 --cp-kv-cache-interleave-size 4 --dcp-kv-cache-interleave-size 4 --max-num-seqs 8 --max-model-len 1048576 --max-num-batched-tokens 8192 --prefill-schedule-interval 8 --max-cudagraph-capture-size 16 --gpu-memory-utilization 0.91 --mamba-cache-mode align --enable-chunked-prefill --dtype bfloat16 --kv-cache-dtype fp8 --quantization modelopt_mixed --block-size 256 --load-format instanttensor --attention-backend B12X --moe-backend auto --linear-backend b12x --no-enable-flashinfer-autotune --enable-auto-tool-choice --tool-call-parser glm47 --reasoning-parser glm45 --additional-config {"glm53_kda_decode_backend":"b12x","kda_prefill_backend":"flashkda"} --compilation-config {"cudagraph_mode":"FULL"} --enable-prefix-caching --speculative-config {"method":"mtp","revision":"46aaae8a82032f77100f2f03e9cc11b391df3b4d","num_speculative_tokens":3,"draft_sample_method":"probabilistic","rejection_sample_method":"standard","moe_backend":"humming","attention_backend":"B12X"} --enable-expert-parallel --mm-encoder-tp-mode weights --cudagraph-capture-sizes 1 2 4 8 16 
+
+CACHE_MODE=vram
+GPU_MEMORY_UTILIZATION=0.91
+MODEL_REVISION=46aaae8a82032f77100f2f03e9cc11b391df3b4d
+SPECULATOR=mtp
+DFLASH_MODEL=local-inference-lab/GLM-5.3-Flash-DFlash2
+MTP_DEPTH=3
+MODEL=local-inference-lab/GLM-5.3-Flash-NVFP4
+CUDA_VISIBLE_DEVICES=0,1,2

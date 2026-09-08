@@ -1,0 +1,209 @@
+{
+  "honest_notes": [
+    "prefix speedup ~= 1.0 on lmcache passes means pass-1 was already warm (p1 0.53s); the same-disk L2 holds KV from earlier probes inside the wave, so repeated-prefill cost is ~0.5s absolute, not a dead cache",
+    "pass-1 startup_seconds includes cold JIT compile on a fresh node; passes 2-6 reuse the same /cache/jit fingerprint namespace, so ~191-246s is warm-compile weight load",
+    "dflash2 vram 1M prefill 227.9s vs 116.7s with lmcache: 2x mode-cache interaction, attributed follow-up (draft KV sliding window + pool layout)",
+    "QAD borderline corpus row returns empty content under DFlash2 in both cache modes (corpus 4/5), passes under dense/mtp3/native/lmcache",
+    "vision green row: content empty even with 96-token budget (reasoning consumed all tokens); red row grades",
+    "cache axis came from launch env (argv.txt); conditions.cache_mode added to the client after this wave"
+  ],
+  "image": "infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1ffdcc1",
+  "kv_capacity": {
+    "1-dense-vram": 3097517,
+    "2-mtp3-vram": 2280455,
+    "3-dflash2-vram": 2078852,
+    "4-dense-native": 3121851,
+    "5-dense-lmcache": 3563566,
+    "6-dflash2-lmcache": 2465073
+  },
+  "node": {
+    "compute_cap": 1200,
+    "cpu_ram_gb": 755,
+    "cuda_max_good": 13.0,
+    "disk_class": "YMTC NVMe 350G partition",
+    "driver": "580.82.09",
+    "gpu": "RTX PRO 6000 Blackwell Workstation Edition x4 (97887 MiB each)",
+    "kind": "vast.ai on-demand",
+    "note": "single-container ssh mode; /dev/shm 188G; weights on NVMe (no NFS)",
+    "offer": 42445861
+  },
+  "passes": [
+    {
+      "conc_all_ok": true,
+      "conc_elapsed": [
+        24.271,
+        24.51,
+        24.727,
+        24.773
+      ],
+      "determinism_answers": [
+        "R27 TP3 ordinary works"
+      ],
+      "determinism_pass": true,
+      "graded_pass": 5,
+      "graded_rows": 5,
+      "long_seconds": 120.97,
+      "long_tok_per_s": 8266.8,
+      "long_tokens": 1000035,
+      "mode": "dense",
+      "pass": "1-dense-vram",
+      "prefix_pass1_seconds": 5.912,
+      "prefix_pass2_seconds": 0.216,
+      "prefix_same_answer": true,
+      "prefix_speedup": 27.39,
+      "smoke_accept": true,
+      "smoke_answer": "R27 TP3 ordinary works",
+      "startup_seconds": 231,
+      "vision_pass": 0,
+      "vision_rows": null
+    },
+    {
+      "conc_all_ok": true,
+      "conc_elapsed": [
+        16.962,
+        23.88,
+        23.985,
+        24.003
+      ],
+      "determinism_answers": [
+        "R27 TP3 MTP3 works"
+      ],
+      "determinism_pass": true,
+      "graded_pass": 5,
+      "graded_rows": 5,
+      "long_seconds": 119.388,
+      "long_tok_per_s": 8376.3,
+      "long_tokens": 1000035,
+      "mode": "mtp3",
+      "pass": "2-mtp3-vram",
+      "prefix_pass1_seconds": 5.937,
+      "prefix_pass2_seconds": 0.233,
+      "prefix_same_answer": true,
+      "prefix_speedup": 25.47,
+      "smoke_accept": true,
+      "smoke_answer": "R27 TP3 MTP3 works",
+      "startup_seconds": 236,
+      "vision_pass": 0,
+      "vision_rows": null
+    },
+    {
+      "conc_all_ok": true,
+      "conc_elapsed": [
+        14.489,
+        14.496,
+        14.511,
+        14.538
+      ],
+      "determinism_answers": [
+        "R27 TP3 DFlash2 works"
+      ],
+      "determinism_pass": true,
+      "graded_pass": 4,
+      "graded_rows": 5,
+      "long_seconds": 227.891,
+      "long_tok_per_s": 4388.2,
+      "long_tokens": 1000035,
+      "mode": "dflash2",
+      "pass": "3-dflash2-vram",
+      "prefix_pass1_seconds": 5.854,
+      "prefix_pass2_seconds": 0.404,
+      "prefix_same_answer": true,
+      "prefix_speedup": 14.48,
+      "smoke_accept": true,
+      "smoke_answer": "R27 TP3 DFlash2 works",
+      "startup_seconds": 246,
+      "vision_pass": 1,
+      "vision_rows": 2
+    },
+    {
+      "conc_all_ok": true,
+      "conc_elapsed": [
+        11.926,
+        11.934,
+        11.941,
+        11.949
+      ],
+      "determinism_answers": [
+        "R27 TP3 native offload works"
+      ],
+      "determinism_pass": true,
+      "graded_pass": 5,
+      "graded_rows": 5,
+      "long_seconds": 114.241,
+      "long_tok_per_s": 8753.7,
+      "long_tokens": 1000035,
+      "mode": "native",
+      "pass": "4-dense-native",
+      "prefix_pass1_seconds": 5.848,
+      "prefix_pass2_seconds": 0.489,
+      "prefix_same_answer": true,
+      "prefix_speedup": 11.95,
+      "smoke_accept": true,
+      "smoke_answer": "R27 TP3 native offload works",
+      "startup_seconds": 216,
+      "vision_pass": 0,
+      "vision_rows": null
+    },
+    {
+      "conc_all_ok": true,
+      "conc_elapsed": [
+        2.147,
+        2.16,
+        2.447,
+        2.497
+      ],
+      "determinism_answers": [
+        "R27 TP3 lmcache works"
+      ],
+      "determinism_pass": true,
+      "graded_pass": 5,
+      "graded_rows": 5,
+      "long_seconds": 116.4,
+      "long_tok_per_s": 8591.4,
+      "long_tokens": 1000035,
+      "mode": "lmcache",
+      "pass": "5-dense-lmcache",
+      "prefix_pass1_seconds": 0.529,
+      "prefix_pass2_seconds": 0.519,
+      "prefix_same_answer": true,
+      "prefix_speedup": 1.02,
+      "smoke_accept": true,
+      "smoke_answer": "R27 TP3 lmcache works",
+      "startup_seconds": 191,
+      "vision_pass": 0,
+      "vision_rows": null
+    },
+    {
+      "conc_all_ok": true,
+      "conc_elapsed": [
+        0.932,
+        1.259,
+        1.565,
+        1.928
+      ],
+      "determinism_answers": [
+        "R27 TP3 DFlash2 lmcache works"
+      ],
+      "determinism_pass": true,
+      "graded_pass": 4,
+      "graded_rows": 5,
+      "long_seconds": 116.682,
+      "long_tok_per_s": 8570.6,
+      "long_tokens": 1000035,
+      "mode": "dflash2",
+      "pass": "6-dflash2-lmcache",
+      "prefix_pass1_seconds": 0.539,
+      "prefix_pass2_seconds": 0.413,
+      "prefix_same_answer": true,
+      "prefix_speedup": 1.31,
+      "smoke_accept": true,
+      "smoke_answer": "R27 TP3 DFlash2 lmcache works",
+      "startup_seconds": 196,
+      "vision_pass": 1,
+      "vision_rows": 2
+    }
+  ],
+  "recipe_commit": "068293ffaca79782b3e873c3c46909a6946791e0",
+  "wave": "glm53-r27-tp3-min r6 six-pass",
+  "weight_download": "186G target + 1.2G draft from Hugging Face in ~25 min (~950 MB/s aggregate)"
+}

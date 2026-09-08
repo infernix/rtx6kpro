@@ -1,0 +1,9 @@
+{
+  "cold_jit": false,
+  "hf_home": "nvme",
+  "image_digest": "infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1ffdcc1",
+  "launcher_pid": 15106,
+  "ready_to_health": 1,
+  "startup_seconds": 246,
+  "weight_source": "/root/.cache/huggingface (host NVMe)"
+}
