@@ -4,7 +4,7 @@
 Drives a running GLM-5.3-Flash NVFP4 server through the fixed qualification
 order and writes a JSON receipt per pass:
   - fresh-server-per-profile, matched warmups
-  - target-only no-spec baseline (determinism 5/5, frozen text corpus 9/9)
+  - target-only no-spec baseline (determinism 5/5, graded text corpus 5/5)
   - exact long prompt + 16-token completion (TTFT / prefill tok/s)
   - four-way 128K concurrency
   - prefix-cache reuse double-pass
@@ -118,7 +118,9 @@ def main() -> None:
                                     "warmup_requests": args.warmups,
                                     "prefill_trials": args.prefill_trials,
                                    "ladder_methodology": "decode ladder (concurrency 1,4,8,16,30 x contexts 0,16k,32k, duration 30) runs container-side via llm_decode_bench.py in the validation wave; archived methodology recorded temperature:null vs this wave temperature:0/seed:0",
-                                    "decode_trials": args.decode_trials}}
+                                    "decode_trials": args.decode_trials,
+                   "cache_mode": __import__("os").environ.get("CACHE_MODE", "vram"),
+                   "speculation_axis": args.mode}}
 
     if args.expected:
         text, result = text_answer(base, f"Reply with exactly: {args.expected}")
