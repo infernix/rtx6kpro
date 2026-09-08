@@ -39,6 +39,7 @@ require local checkpoint paths or source-code bind mounts.
 |---|---|
 | Runtime status | **qualified** for Tensor Parallelism 4 (TP4) with Decode Context Parallelism 1 (DCP1) in all three serving modes |
 | Additional qualification | **qualified** for TP4/DCP4 DFlash2 prefill with full compressed-key/value (CKV) gathering |
+| TP3 candidate overlay | **research-only validated** 2026-09-08: TP3/EP3/DCP1 chain reconstructed on the R27 sources, six serving-configurations passed; receipts bound to `infernix/vllm@sha256:1871c461…`. See [TP3 three-GPU candidate](#tp3-three-gpu-candidate-research-overlay-2026-09-08). |
 | Hardware | four RTX PRO 6000 Blackwell Workstation Edition GPUs, PCIe 5.0 x16, stock clocks |
 | Target checkpoint | `local-inference-lab/GLM-5.3-Flash-NVFP4` |
 | Target update policy | resolve the Hugging Face `main` branch at startup; no runtime revision pin |
@@ -391,6 +392,185 @@ python3 llm_decode_bench.py \
   --output jovian-judgement-cc1.json
 ```
 
+## TP3 three-GPU candidate (research overlay, 2026-09-08)
+
+Status: **research-only validated**. Everything above documents the qualified
+four-GPU (TP4) Jovian Judgement deployment and stays the qualified serving
+path. The section below pins a three-GPU TP3 candidate built on the R27 source
+composition, reconstructed as a minimal mergeable port (`-min` branches on the
+`infernix` forks) with every surviving commit tracked per the ledger in
+[infernix/vllm#1](https://github.com/infernix/vllm/issues/1)
+("Canonical merge set (start here)").
+
+### TP3 source contract and artifact
+
+```text
+infernix/vllm:glm53-r27-tp3-min-recipe01c67936a364-r6
+infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1ffdcc1
+```
+
+- Recipe branch `research/glm53-r27-tp3-min-overlay` @
+  `068293ffaca79782b3e873c3c46909a6946791e0`
+  ([infernix/blackwell-llm-docker](https://github.com/infernix/blackwell-llm-docker/tree/research/glm53-r27-tp3-min-overlay));
+  parent image
+  `voipmonitor/vllm:jovian-judgement-community-20260906-r27@sha256:a298fe1cd207…`
+  (the R27 runtime documented by the master-model page; the r8 artifact of
+  this page is not in that lineage).
+- vLLM `-min` branch `research/glm53-tp3-r27-min` @
+  `1ad233f31a2c932ca2ab86935ef604ad5983e4bb` (tree `e39e3279aef2…`) —
+  27 commits / 30 files, +3,586/−153 vs the R27 base
+  `63a82f8d323e…`
+  ([compare](https://github.com/infernix/vllm/compare/63a82f8d...1ad233f3)).
+  Head fix: `fix(glm53): type the boundary-checkpoint restore scalars` — the
+  restore kernel received host Python ints where the traced body called
+  `.to(tl.int64)`, so any prefix-cache hit that restored a boundary checkpoint
+  killed `EngineCore` (`AttributeError: 'int' object has no attribute 'to'`)
+  and every later request answered HTTP 500.
+- B12X `-min` branch @ `7e0d491111fc02b60f8e0aa27d0380336fa88424` (tree
+  `cc8d7ec10ce5…`) — 21 commits, 29 files, +2,145/−648 vs base
+  `e8ad299b174f…`
+  ([compare](https://github.com/infernix/b12x/compare/e8ad299b...7e0d4911)).
+  The head commit is import-order only (content-equal to the qualified bake),
+  so it required no fresh requalification; ruff repo-default census stays
+  229→229 and the branch's own touched-file select improves 1→0.
+  Overlay lock rows: packaged `source.lock` `cf3b0f5524…`, TP3 launcher
+  `6560f35d5f…`, verifier `62c18385cf…`; TP3 compiled-artifact fingerprint
+  `cu133-torch213-glm53-r27-tp3-vllm1ad233f3-b12x7e0d4911-dense-ctx1m-seq8-bt8192`.
+- Checkpoint revisions are pinned, not branch-guessed:
+  target `local-inference-lab/GLM-5.3-Flash-NVFP4@46aaae8a8203…`,
+  draft `local-inference-lab/GLM-5.3-Flash-DFlash2@dfa270d7eb8d…` (MXFP8).
+  The older `huggingface-main` draft label was never a resolvable revision and
+  made every speculative launch fail closed at `SpeculativeConfig` validation.
+
+### TP3 launch commands — what differs from the four-GPU runbook
+
+The TP3 chain runs its own strict launcher: every value below is enforced by
+fail-closed `lock_env` gates — any caller-passed value that differs from the
+locked one exits 2, and the two model revisions are locked (they cannot be
+re-pointed from the command line).
+
+Common parameters differ only where the runbook above had four GPUs:
+
+```bash
+IMAGE=infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1ffdcc1
+GPU_DEVICES=0,1,2
+```
+
+Select exactly one serving mode:
+
+```bash
+# TP3 without speculation
+TP3_ARGS=(-e SPECULATOR=mtp -e MTP_DEPTH=0)
+# TP3 with built-in MTP, three draft tokens
+TP3_ARGS=(-e SPECULATOR=mtp -e MTP_DEPTH=3)
+# TP3 with DFlash2, its trained seven draft tokens; the draft is pinned by revision in the image
+TP3_ARGS=(-e SPECULATOR=dflash2 -e DFLASH_DEPTH=7)
+```
+
+Select exactly one cache mode (vram is the default):
+
+```bash
+CACHE_ARGS=(-e CACHE_MODE=vram)                                                    # GPU-resident KV
+CACHE_ARGS=(-e CACHE_MODE=native -e NATIVE_KV_OFFLOADING_SIZE_GB=64)               # native DRAM KV offload tier
+CACHE_ARGS=(-e CACHE_MODE=lmcache -e LMCACHE_L1_SIZE_GB=64 -e LMCACHE_L1_INIT_SIZE_GB=2)  # LMCache DRAM L1
+```
+
+Run:
+
+```bash
+docker rm -f "$NAME" 2>/dev/null || true
+docker run -d \
+  --name "$NAME" \
+  --init \
+  --gpus "\"device=${GPU_DEVICES}\"" \
+  --network host \
+  --ipc host \
+  -v glm53-r27-tp3-cache:/cache \
+  -v glm53-r27-tp3-hf-cache:/root/.cache/huggingface \
+  -e PORT=8000 \
+  -e TP=3 \
+  -e VLLM_MTP_NVFP4_LM_HEAD=1 \
+  "${TP3_ARGS[@]}" "${CACHE_ARGS[@]}" \
+  "$IMAGE"
+```
+
+| Knob | Four-GPU runbook (r8 page, above) | TP3 overlay (locked; do not pass) |
+|---|---|---|
+| GPUs / `TP` / `DCP` | 4 cards, TP4, DCP1 (or DCP4) | 3 cards, TP3/EP3, DCP1 |
+| `PORT` | 5001 | 8000 |
+| `MAX_MODEL_LEN` | 262,144 | 1,048,576 |
+| `MAX_NUM_SEQS` | 16 | 8 |
+| `MAX_NUM_BATCHED_TOKENS` | 4,096 | 8,192 |
+| `PREFILL_SCHEDULE_INTERVAL` / fairness | 8 (inactive without decode pressure) | 8 alongside `FAIRNESS_ENGINE=none`, `PREFILL_COMPUTE_SHARE=none` |
+| `MAX_CUDAGRAPH_CAPTURE_SIZE` | 128 | 16 (capture sizes 1/2/4/8/16) |
+| `GPU_MEMORY_UTILIZATION` | 0.90 | 0.91 |
+| NCCL channels | 32 min / 32 max | 16 min / 16 max |
+| MTP NVFP4 proposal head | parent-image default | must pass `VLLM_MTP_NVFP4_LM_HEAD=1`; the overlay image bakes `0` and the launcher fails closed on it |
+| KV / loader / backends | page's r8 contract | `KV_CACHE_DTYPE=fp8`, `LOAD_FORMAT=instanttensor`, `block-size 256`, B12X attention, MoE `auto` + MTP MoE `humming`, DFlash2 FlashAttention, KDA decode `b12x` / prefill `flashkda` |
+| DFlash2 draft KV | main-branch resolution | pinned `dfa270d7eb8d…`, draft KV dtype `auto` (BF16 sliding-window) |
+
+DFlash2 draft KV stays BF16 `auto` under the TP3 chain (sliding-window
+bounded); `FAIRNESS_ENGINE=none` + `PREFILL_SCHEDULE_INTERVAL=8` ship as one
+knob pair.
+
+### TP3 validation wave (2026-09-08, six passes)
+
+Hardware: one RTX PRO 6000 Blackwell Workstation Edition host rented on
+vast.ai (offer `42445861`: 4 GPUs, stock clocks, driver `580.82.09`, CUDA
+`13.0` host on a `cu133` image via driver minor-version compatibility), 755
+GiB RAM, NVMe-only weights, `/dev/shm` 188 GiB. Serving used GPUs 0–2 of 4 in
+one container from the exact digest above; every pass restarted the server
+fresh and recorded `/proc/<pid>/cmdline` plus env. Weights 186 GiB streamed
+from Hugging Face in ~25 minutes; per-pass server startup 191–246 s including
+the first-pass JIT compile on a cold `/cache/jit` fingerprint.
+
+Method of this wave (its own instruments; not the `llm-decode-bench` CC1
+cells above): each pass runs the frozen probe corpus, 5x same-prompt
+determinism, a 1,000,035-token admission (end-to-end request time), a 4x
+131,107-token concurrent prefill burst, and an identical-prompt prefix-cache
+double pass. Receipts:
+[receipts-vast-r6/](https://github.com/infernix/rtx6kpro/tree/docs/glm53-r27-tp3-min-20260909/benchmarks/data/glm53-r27-tp3-min-20260909/receipts-vast-r6)
+on this branch.
+
+| Pass (mode x cache) | 1M-prefill tok/s | 4x131K burst (s) | Prefix reuse | KV pool tokens | Corpus | Vision | Determinism | Startup |
+|---|---:|---|---|---:|---|---|---|---:|
+| dense / vram | 8,267 | 24.3–24.8 all ok | 27.4x (p2 0.22 s) | 3,097,517 | 5/5 | n/a | 5/5 | 231 s |
+| mtp3 / vram | 8,376 | 17.0–24.0 all ok | 25.5x (p2 0.23 s) | 2,280,455 | 5/5 | n/a | 5/5 | 236 s |
+| dflash2 / vram | 4,388 | 14.5 uniform | 14.5x (p2 0.40 s) | 2,078,852 | 4/5 | 1/2 | 5/5 | 246 s |
+| dense / native | 8,754 | 11.9 uniform | 12.0x (p2 0.49 s) | 3,121,851 | 5/5 | n/a | 5/5 | 216 s |
+| dense / lmcache | 8,591 | 2.1–2.5 | 1.02x, pass-1 already warm (0.53 s) | 3,563,566 | 5/5 | n/a | 5/5 | 191 s |
+| dflash2 / lmcache | 8,571 | 0.9–1.9 | 1.31x, pass-1 already warm (0.54 s) | 2,465,073 | 4/5 | 1/2 | 5/5 | 196 s |
+
+Honest reads:
+
+- Prefix speedup ≈ 1.0 on the lmcache passes is a warm-lead artifact: the
+  persisted L2 on the same host disk already held the probe KV, so pass 1
+  itself is ~0.5 s. The vram/native rows are the honest cold comparisons.
+- The dense/mtp3/native/lmcache prefill columns come from the 1,000,035-token
+  admission (full long-context attention tail), so they must not be compared
+  against this page's 32k TP4 cells or any other short-context figure.
+  Mid-context reads from inside the wave (per-request 131K burst of the
+  native pass) land in the same order as card-proportional scaling of the
+  32k row; matched-context TP3 cells are not yet recorded here.
+- DFlash2/vram pays a 2x 1M-prefill penalty (227.9 s vs 116.7 s with
+  lmcache) that this wave does not attribute; DFlash2 also returns empty
+  content for the `QAD borderline` graded row in both cache modes (4/5 in
+  both), and the vision green row answers empty within its 96-token budget
+  (red proves the vision path works). Attributions are open follow-ups.
+- No decode ladder or draft-acceptance measurement ran in this wave; C1/C8
+  columns above belong to the r8 four-GPU artifact only and are not claimed
+  for TP3.
+
+Cross-generation anchors measured on the same GPU class (previous R21 TP3
+qualification receipt): KV pools 3,074,098 / 2,292,781 / 2,082,512 tokens
+(ordinary / MTP3 / DFlash2) vs this wave's 3,097,517 / 2,280,455 / 2,078,852 —
+every pool within ±1%; model load 629–651 s/rank then vs 191–246 s
+pass-inclusive now; the only same-definition 1M datapoint in the R21 receipt
+is DFlash2 retrieval at 198.2 s (5,046 tok/s) vs this wave's vram 227.9 s
+(4,388 tok/s) and lmcache 116.7 s (8,571 tok/s). R21 pinned target
+`378ca545…` and draft `aea0ac8a…`; this wave pins `46aaae8a…` and
+`dfa270d7eb8d…`, so checkpoint drift rides along the codebase delta.
+
 ## Limitations
 
 - The source pull requests in the source contract are open review units. Use
@@ -404,3 +584,8 @@ python3 llm_decode_bench.py \
   and FlashInfer for sampling.
 - Raw speculative tok/s is prompt- and acceptance-dependent. Record engine
   steps per second and accepted length with every MTP or DFlash2 comparison.
+- The TP3 candidate overlay binds branch heads and digests rather than merged
+  pull requests (the `-min` branches are the merge proposals); receipts, the
+  kept/dropped commit ledger, and the lint census live in
+  [infernix/vllm#1](https://github.com/infernix/vllm/issues/1). Open items are
+  listed in the [TP3 candidate section](#tp3-three-gpu-candidate-research-overlay-2026-09-08).
