@@ -108,6 +108,8 @@ def main() -> None:
                         help="skip the prefix-cache reuse probe independently of --skip-long")
     parser.add_argument("--skip-vision", action="store_true")
     parser.add_argument("--determinism-trials", type=int, default=5)
+    parser.add_argument("--corpus", default=None,
+                        help="probe corpus JSON; defaults to probe-corpus.json next to this script")
     args = parser.parse_args()
     base = f"http://{args.host}:{args.port}"
     corpus_rows = load_corpus(args.corpus or (pathlib.Path(__file__).parent / "probe-corpus.json"))
@@ -232,7 +234,7 @@ def main() -> None:
 
     json.dump(receipt, open(args.out, "w"), indent=2, sort_keys=True)
     open(args.out, "a").write("\n")
-    print(json.dumps({k: receipt.get(k) for k in ("mode", "smoke", "determinism_5x")}, indent=2))
+    print(json.dumps({k: receipt.get(k) for k in ("mode", "smoke", "determinism")}, indent=2))
 
 
 if __name__ == "__main__":
