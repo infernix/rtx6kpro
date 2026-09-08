@@ -22,22 +22,15 @@ import json
 import statistics
 import struct
 import time
+import pathlib
 import urllib.error
 import urllib.request
 import zlib
 
 MODEL = "GLM-5.3-Flash-NVFP4"
 
-FROZEN_TEXT_CORPUS = [
-    "Reply with exactly: R27 TP3 ordinary works",
-    "Reply with exactly: R27 TP3 MTP3 works",
-    "Reply with exactly: R27 TP3 DFlash2 works",
-    "Reply with exactly: QAD borderline probe pass",
-    "State the rule for choosing an activation function when cheking off an integer list.",
-    "Reply with exactly: twenty-two seconds",
-    "Explain, in one short sentence, why the four-way concurrency pass exists.",
-]
-FROZEN_VISION = [("red", "red-image-qualifies")]
+def load_corpus(path: str) -> list[dict]:
+    return json.load(open(path))["rows"]
 REVERSE = "abcdefghijklmnopqrstuvwxyz"
 
 LONG_PROMPT_WORDS = "pineapple"
@@ -115,6 +108,7 @@ def main() -> None:
     parser.add_argument("--determinism-trials", type=int, default=5)
     args = parser.parse_args()
     base = f"http://{args.host}:{args.port}"
+    corpus_rows = load_corpus(args.corpus or (pathlib.Path(__file__).parent / "probe-corpus.json"))
 
     receipt: dict = {"mode": args.mode, "host_port": f"{args.host}:{args.port}",
                      "conditions": {"temperature": 0.0, "seed": 0, "fresh_server_profile": True,
@@ -127,20 +121,31 @@ def main() -> None:
         receipt["smoke"] = {"accept": text.strip() == args.expected, "response": text.strip(),
                             "usage": result.get("usage")}
 
-    # frozen text corpus
+    # frozen probe corpus: text rows always; vision rows unless suppressed
     corpus_results = []
-    for item in FROZEN_TEXT_CORPUS:
-        answer, _ = text_answer(base, item)
-        corpus_results.append({"prompt_head": item.split(".")[0][:64], "answer": answer.strip()})
-    receipt["frozen_text_corpus"] = {"count": len(FROZEN_TEXT_CORPUS), "results": corpus_results}
+    vision_rows = [row for row in corpus_rows if row["kind"] == "vision"]
+    for row in corpus_rows:
+        if row["kind"] != "text":
+            continue
+        answer, _ = text_answer(base, row["prompt"])
+        corpus_results.append({"row": row["prompt"][:40], "accept": (row["expect"] and answer.strip() == row["expect"]),
+                               "answer": answer.strip()[:64]})
+    receipt["frozen_probes_text"] = {"rows": len(corpus_results), "results": corpus_results}
 
-    # determinism: same prompt 5x, compare exact strings across all repeats
-    if args.expected:
+    # determinism is unconditional: repeat the expected smoke prompt, or the first
+    # text corpus row when --expected is absent; a skipped check must be visible
+    det_prompt = f"Reply with exactly: {args.expected}" if args.expected else None
+    if det_prompt is None:
+        text_rows = [row for row in corpus_rows if row["kind"] == "text"]
+        det_prompt = text_rows[0]["prompt"] if text_rows else None
+    if det_prompt is not None:
         repeats = []
         for _ in range(args.determinism_trials):
-            answer, _ = text_answer(base, f"Reply with exactly: {args.expected}")
+            answer, _ = text_answer(base, det_prompt)
             repeats.append(answer.strip())
-        receipt["determinism_5x"] = {"pass": len(set(repeats)) == 1, "answers": repeats}
+        receipt["determinism"] = {"trials": args.determinism_trials, "pass": len(set(repeats)) == 1, "answers": repeats}
+    else:
+        receipt["determinism"] = "not_run"
 
     # long-context admission
     if not args.skip_long:
@@ -191,30 +196,28 @@ def main() -> None:
             "same_answer": a1.strip() == a2.strip(),
         }
 
-    # vision probe (generated red PNG)
+    # vision probes from the corpus rows (generated PNG per row)
     if not args.skip_vision:
-        png_b64 = build_image_png("red")
-        payload = {
-            "model": MODEL,
-            "messages": [{"role": "user", "content": [
-                {"type": "text", "text": "What color is this single image?"}]}],
-            "temperature": 0.0, "seed": 0, "max_tokens": 32,
-        }
-        data = json.dumps(payload).encode()
-        req = urllib.request.Request(base + "/v1/chat/completions", data=data,
-                                     headers={"Content-Type": "application/json"})
-        # multimodal image path: attach the png as a data url
-        payload["messages"][0]["content"].insert(0, {
-            "type": "image_url",
-            "image_url": {"url": f"data:image/png;base64,{png_b64}"},
-        })
-        data = json.dumps(payload).encode()
-        req = urllib.request.Request(base + "/v1/chat/completions", data=data,
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=1800) as resp:
-            result = json.load(resp)
-        msg = result["choices"][0]["message"]
-        receipt["vision_probe"] = {"color_seen": (msg.get("content") or "").strip()[:16]}
+        vision_results = []
+        for row in vision_rows:
+            png_b64 = build_image_png(row["color"])
+            payload = {
+                "model": MODEL,
+                "messages": [{"role": "user", "content": [
+                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{png_b64}"}},
+                    {"type": "text", "text": "What color is this single image?"}]}],
+                "temperature": 0.0, "seed": 0, "max_tokens": 32,
+            }
+            data = json.dumps(payload).encode()
+            req = urllib.request.Request(base + "/v1/chat/completions", data=data,
+                                         headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=1800) as resp:
+                result = json.load(resp)
+            msg = result["choices"][0]["message"]
+            seen = (msg.get("content") or "").strip()[:16]
+            vision_results.append({"color": row["color"], "seen": seen,
+                                   "accept": row["expect"].lower() in seen.lower() or row["alt"].lower() in seen.lower()})
+        receipt["frozen_probes_vision"] = {"rows": len(vision_results), "results": vision_results}
 
     json.dump(receipt, open(args.out, "w"), indent=2, sort_keys=True)
     open(args.out, "a").write("\n")

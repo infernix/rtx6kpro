@@ -1,0 +1,52 @@
+{
+  "methodology": "frozen probe corpus for the r27-tp3-min GPU passes; derived from the recorded qualification methodology (fresh server per profile, temp 0 seed 0, matched warmups, salience given to exact-content probes; the decode ladder itself is deferred to the llm_decode_bench-class wave)",
+  "rows": [
+    {
+      "expect": "R27 TP3 ordinary works",
+      "kind": "text",
+      "prompt": "Reply with exactly: R27 TP3 ordinary works"
+    },
+    {
+      "expect": "R27 TP3 MTP3 works",
+      "kind": "text",
+      "prompt": "Reply with exactly: R27 TP3 MTP3 works"
+    },
+    {
+      "expect": "R27 TP3 DFlash2 works",
+      "kind": "text",
+      "prompt": "Reply with exactly: R27 TP3 DFlash2 works"
+    },
+    {
+      "expect": "QAD borderline probe pass",
+      "kind": "text",
+      "prompt": "Reply with exactly: QAD borderline probe pass"
+    },
+    {
+      "expect": null,
+      "kind": "text",
+      "prompt": "State the rule for choosing an activation function when checking off an integer list."
+    },
+    {
+      "expect": "twenty-two seconds",
+      "kind": "text",
+      "prompt": "Reply with exactly: twenty-two seconds"
+    },
+    {
+      "expect": null,
+      "kind": "text",
+      "prompt": "Explain, in one short sentence, why the four-way concurrency pass exists."
+    },
+    {
+      "alt": "Red",
+      "color": "red",
+      "expect": "red",
+      "kind": "vision"
+    },
+    {
+      "alt": "Green",
+      "color": "green",
+      "expect": "green",
+      "kind": "vision"
+    }
+  ]
+}
