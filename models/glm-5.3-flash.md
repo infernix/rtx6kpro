@@ -421,11 +421,11 @@ infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1f
   27 commits / 30 files, +3,586/−153 vs the R27 base
   `63a82f8d323e…`
   ([compare](https://github.com/infernix/vllm/compare/63a82f8d...1ad233f3)).
-  Head fix: `fix(glm53): type the boundary-checkpoint restore scalars` — the
-  restore kernel received host Python ints where the traced body called
-  `.to(tl.int64)`, so any prefix-cache hit that restored a boundary checkpoint
-  killed `EngineCore` (`AttributeError: 'int' object has no attribute 'to'`)
-  and every later request answered HTTP 500.
+  Head fix: `fix(glm53): type the boundary-checkpoint restore scalars`
+  (`1ad233f3`) — the restore kernel got host Python ints where the traced
+  body called `.to(tl.int64)`, so any prefix-cache hit that restored a
+  boundary checkpoint killed `EngineCore`; every later request answered
+  HTTP 500 until the fix.
 - B12X `-min` branch @ `7e0d491111fc02b60f8e0aa27d0380336fa88424` (tree
   `cc8d7ec10ce5…`) — 21 commits, 29 files, +2,145/−648 vs base
   `e8ad299b174f…`
@@ -433,7 +433,7 @@ infernix/vllm@sha256:1871c46156aaac7a785286feea0533d290e777a91f193e23a1f699fdf1f
   The head commit is import-order only (content-equal to the qualified bake),
   so it required no fresh requalification; ruff repo-default census stays
   229→229 and the branch's own touched-file select improves 1→0.
-  Overlay lock rows: packaged `source.lock` `cf3b0f5524…`, TP3 launcher
+- Overlay lock: packaged `source.lock` `cf3b0f5524…`, TP3 launcher
   `6560f35d5f…`, verifier `62c18385cf…`; TP3 compiled-artifact fingerprint
   `cu133-torch213-glm53-r27-tp3-vllm1ad233f3-b12x7e0d4911-dense-ctx1m-seq8-bt8192`.
 - Checkpoint revisions are pinned, not branch-guessed:
@@ -513,6 +513,16 @@ DFlash2 draft KV stays BF16 `auto` under the TP3 chain (sliding-window
 bounded); `FAIRNESS_ENGINE=none` + `PREFILL_SCHEDULE_INTERVAL=8` ship as one
 knob pair.
 
+Fail-closed in the opposite direction too: the verifier's `REQUIRED_UNSET_ENV`
+set must not be provided at all —
+`KV_CACHE_QUANT`, `VLLM_KV_CACHE_LAYOUT`, `VLLM_SSM_CONV_STATE_LAYOUT`,
+`VLLM_DP_SIZE`, `VLLM_DP_RANK`, `VLLM_DP_RANK_LOCAL`, `VLLM_DP_MASTER_IP`,
+`VLLM_DP_MASTER_PORT`, `GLM53_TARGET_BLOCK_SIZE`, `GLM53_MAMBA_BLOCK_SIZE`,
+`NCCL_ALGO`, `NCCL_COLLNET_ENABLE`, `NCCL_NVLS_ENABLE`, `NCCL_SHM_DISABLE`,
+`NCCL_PXN_DISABLE`, `NCCL_P2P_DIRECT_DISABLE`, `VLLM_PCIE_DMA_FP8`,
+`B12X_PCIE_DMA_FP8` — so a reader who copies the four-GPU block above and adds
+their usual NCCL/DP defaults without dropping them first exits 2.
+
 ### TP3 validation wave (2026-09-08, six passes)
 
 Hardware: one RTX PRO 6000 Blackwell Workstation Edition host rented on
@@ -531,6 +541,14 @@ determinism, a 1,000,035-token admission (end-to-end request time), a 4x
 double pass. Receipts:
 [receipts-vast-r6/](https://github.com/infernix/rtx6kpro/tree/docs/glm53-r27-tp3-min-20260909/benchmarks/data/glm53-r27-tp3-min-20260909/receipts-vast-r6)
 on this branch.
+The 1M-prefill column is single-request end-to-end elapsed (~8.3–8.8k tok/s
+over ~121 s); the 4x131K burst column reports the per-request elapsed while
+four requests run simultaneously, so the aggregate over that window is 4x the
+tokens — it is also persisted-L2 warm on the two lmcache rows, as is the
+prefix column's pass-1 lead. The vision probe only runs on DFlash2 passes, so
+`n/a` elsewhere is by design. KV pool totals differ across cache modes only
+because native/lmcache add a 64 GiB DRAM tier to the same accounting; they
+are not same-shape sizes across modes.
 
 | Pass (mode x cache) | 1M-prefill tok/s | 4x131K burst (s) | Prefix reuse | KV pool tokens | Corpus | Vision | Determinism | Startup |
 |---|---:|---|---|---:|---|---|---|---:|
