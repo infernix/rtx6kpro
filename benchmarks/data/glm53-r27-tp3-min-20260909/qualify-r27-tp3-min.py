@@ -104,6 +104,8 @@ def main() -> None:
     parser.add_argument("--decode-trials", type=int, default=5)
     parser.add_argument("--skip-long", action="store_true")
     parser.add_argument("--skip-concurrency", action="store_true")
+    parser.add_argument("--skip-prefix", action="store_true",
+                        help="skip the prefix-cache reuse probe independently of --skip-long")
     parser.add_argument("--skip-vision", action="store_true")
     parser.add_argument("--determinism-trials", type=int, default=5)
     args = parser.parse_args()
@@ -195,7 +197,7 @@ def main() -> None:
         receipt["four_way_128k_concurrency"] = {"results": q.items, "all_ok": all(r.get("ok") for r in q.items)}
 
     # prefix-cache reuse (double-pass on identical prompt)
-    if not args.skip_long:
+    if not args.skip_prefix:
         prompt = long_prompt_tokens(min(65_536, args.long_tokens))
         t0 = time.perf_counter(); a1, r1 = text_answer(base, prompt, max_tokens=8); t1 = time.perf_counter() - t0
         t0 = time.perf_counter(); a2, r2 = text_answer(base, prompt, max_tokens=8); t2 = time.perf_counter() - t0
